@@ -177,9 +177,9 @@ function AccountDropdown({
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/applications" className="flex items-center gap-2">
+          <Link href="/dashboard-candidates" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            Application Status
+            Dashboard Candidates
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
