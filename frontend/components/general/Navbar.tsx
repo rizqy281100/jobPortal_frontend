@@ -147,6 +147,7 @@ function AccountDropdown({
   compact?: boolean;
 }) {
   const first = name.split(" ")[0];
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -158,37 +159,53 @@ function AccountDropdown({
               </>
             ) : (
               <>
-                Hello, &nbsp;<b>{name}</b>!
+                {/* hindari &nbsp; agar tidak memicu mismatch SSR/CSR */}
+                Hello, <b>{name}</b>!
               </>
             )}
           </span>
           <ChevronDown className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="text-xs text-muted-foreground">
           Account
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+
+        {/* My Profile → Dashboard (Overview) */}
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="flex items-center gap-2">
+          <Link href="/dashboard" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             My Profile
           </Link>
         </DropdownMenuItem>
+
+        {/* Application Status → Dashboard (Applied tab) */}
         <DropdownMenuItem asChild>
-          <Link href="/applications" className="flex items-center gap-2">
+          <Link
+            href="/dashboard?tab=applied"
+            className="flex items-center gap-2"
+          >
             <FileText className="h-4 w-4" />
             Application Status
           </Link>
         </DropdownMenuItem>
+
+        {/* Settings → Dashboard (Settings tab) */}
         <DropdownMenuItem asChild>
-          <Link href="/settings" className="flex items-center gap-2">
+          <Link
+            href="/dashboard?tab=settings"
+            className="flex items-center gap-2"
+          >
             <SettingsIcon className="h-4 w-4" />
             Settings
           </Link>
         </DropdownMenuItem>
+
         <DropdownMenuSeparator />
+
         <DropdownMenuItem asChild className="text-red-600 focus:text-red-600">
           <Link href="/logout" className="flex items-center gap-2">
             <LogOut className="h-4 w-4" />
