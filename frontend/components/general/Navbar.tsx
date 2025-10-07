@@ -185,11 +185,11 @@ function AccountDropdown({
         {/* Application Status → Dashboard (Applied tab) */}
         <DropdownMenuItem asChild>
           <Link
-            href="/dashboard?tab=applied"
+            href="/dashboard-candidates"
             className="flex items-center gap-2"
           >
             <FileText className="h-4 w-4" />
-            Application Status
+            Dashboard Candidates
           </Link>
         </DropdownMenuItem>
 
