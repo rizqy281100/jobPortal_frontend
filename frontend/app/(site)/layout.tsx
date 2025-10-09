@@ -1,8 +1,8 @@
 import Navbar from "@/components/general/Navbar";
 import Footer from "@/components/general/Footer";
 import { readSession } from "@/lib/session";
-import AuthToast from "./AuthToast";
-import { Toaster } from "@/components/ui/sonner";
+// import AuthToast from "./AuthToast";
+// import { Toaster } from "@/components/ui/sonner";
 
 export default async function SiteLayout({
   children,
