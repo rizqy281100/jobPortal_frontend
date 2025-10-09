@@ -93,7 +93,14 @@ export default function Navbar({
         <div className="flex items-center justify-end gap-2">
           {session ? (
             <>
+              {/* Dropdown Akun */}
               <AccountDropdown name={session.name} />
+
+              {/* 🔽 Tombol Login Perusahaan muncul di sebelah dropdown */}
+              <Button asChild variant="outline">
+                <Link href="/perusahaan/login">Login Perusahaan</Link>
+              </Button>
+
               <ThemeToggle />
             </>
           ) : (
@@ -122,12 +129,21 @@ export default function Navbar({
           {session ? (
             <>
               <AccountDropdown name={session.name} compact />
+
+              {/* 🔽 Tombol Login Perusahaan versi mobile */}
+              <Button asChild size="sm" variant="outline">
+                <Link href="/perusahaan/login">Login Perusahaan</Link>
+              </Button>
+
               <ThemeToggle />
             </>
           ) : (
             <>
               <Button asChild variant="outline" size="sm">
                 <Link href="/login">Log in</Link>
+              </Button>
+              <Button asChild size="sm" className="text-white dark:text-white">
+                <Link href="/perusahaan/login">Login Perusahaan</Link>
               </Button>
               <ThemeToggle />
             </>
@@ -137,6 +153,7 @@ export default function Navbar({
     </header>
   );
 }
+
 
 /* ============================ Account Dropdown ============================ */
 function AccountDropdown({
@@ -149,6 +166,7 @@ function AccountDropdown({
   const first = name.split(" ")[0];
 
   return (
+    
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="gap-2 px-2">
