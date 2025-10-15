@@ -162,8 +162,27 @@ export default async function JobDetailPage(props: {
             </div>
 
             <div className="mt-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
-              {/* GANTI Link -> ApplyNowButton */}
-              <ApplyNowButton jobId={job.id} />
+              <ApplyNowButton
+                jobId={job.id}
+                meta={{
+                  title: job.title,
+                  company: job.company,
+                  locationText: `${job.district}, ${job.region}, ${job.province}`,
+                  salaryText: `UZS ${job.salaryMinM}–${job.salaryMaxM}M / month`,
+                  typeLabel: job.type
+                    .replace("fulltime", "Full Time")
+                    .replace("parttime", "Part Time"),
+                  policyLabel:
+                    job.policy === "wfh"
+                      ? "Remote"
+                      : job.policy === "wfo"
+                      ? "Onsite"
+                      : "Hybrid",
+                  status: "active",
+                  href: `/jobs/${job.id}`,
+                }}
+              />
+
               <PostedAgo postedAtISO={postedAtISO} />
             </div>
 

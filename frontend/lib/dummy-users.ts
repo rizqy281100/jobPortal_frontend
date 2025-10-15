@@ -1,10 +1,13 @@
+import axios from "axios";
+
 export type User = {
   id: string;
   name: string;
   email: string;
   // DEMO ONLY: password plaintext (jangan pernah begini di produksi)
   password: string;
-  role: "user" | "employer" | "admin";
+  username: string;
+  role: "worker" | "recruiter";
 };
 
 /** Data user yang aman untuk disimpan di session / dikirim ke client */
@@ -26,21 +29,24 @@ export const USERS: User[] = [
     name: "Nizam Karimov",
     email: "nizam@example.com",
     password: "secret123",
-    role: "user",
+    username: "nizam",
+    role: "worker",
   },
   {
     id: "u2",
     name: "Aisha Dev",
     email: "aisha@example.com",
     password: "password",
-    role: "employer",
+    username: "aisha",
+    role: "recruiter",
   },
   {
     id: "u3",
     name: "Admin Demo",
     email: "admin@example.com",
     password: "admin123",
-    role: "admin",
+    username: "admin",
+    role: "worker",
   },
   // Akun demo cepat (samakan dengan default di form login)
   {
@@ -48,7 +54,8 @@ export const USERS: User[] = [
     name: "Demo User",
     email: "demo@user.com",
     password: "password",
-    role: "user",
+    username: "demo",
+    role: "worker",
   },
 ];
 
@@ -104,12 +111,14 @@ export function createUser(input: {
   name: string;
   email: string;
   password: string;
+  username: string;
   role?: User["role"];
 }): User {
   const name = (input.name ?? "").trim();
   const email = (input.email ?? "").trim().toLowerCase();
   const password = input.password ?? "";
-  const role = input.role ?? "user";
+  const username = (input.username ?? "").trim();
+  const role = input.role ?? "worker";
 
   if (!name || name.length < 2) {
     throw new Error("Name is too short");
@@ -120,6 +129,9 @@ export function createUser(input: {
   if (password.length < 6) {
     throw new Error("Password must be at least 6 characters");
   }
+  if (!name || name.length < 6) {
+    throw new Error("Username is too short");
+  }
   if (findUserByEmail(email)) {
     throw new Error("Email already registered");
   }
@@ -129,7 +141,8 @@ export function createUser(input: {
     id: `u${idSeq++}`,
     name,
     email,
-    password, // DEMO ONLY
+    password,
+    username, // DEMO ONLY
     role,
   };
   USERS.push(user);

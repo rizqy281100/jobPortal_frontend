@@ -1,11 +1,10 @@
 // "use client";
 
 // import * as React from "react";
-// import { useRouter } from "next/navigation";
 // import { Bookmark, Share2 } from "lucide-react";
 // import { toast } from "sonner";
 
-// /** Tombol Save & Share (client-only) */
+// /** ====== Save + Share (sinkron dengan SavedJobsClient) ====== */
 // export default function SaveShare({
 //   jobId,
 //   title,
@@ -16,6 +15,44 @@
 //   company: string;
 // }) {
 //   const [saved, setSaved] = React.useState(false);
+//   const LS_KEY = "savedJobs";
+
+//   React.useEffect(() => {
+//     if (typeof window === "undefined") return;
+//     try {
+//       const raw = localStorage.getItem(LS_KEY);
+//       const arr: any[] = raw ? JSON.parse(raw) : [];
+//       setSaved(arr.some((x) => x.id === jobId));
+//     } catch {}
+//   }, [jobId]);
+
+//   const onToggleSave = () => {
+//     try {
+//       const raw = localStorage.getItem(LS_KEY);
+//       const arr: any[] = raw ? JSON.parse(raw) : [];
+//       const idx = arr.findIndex((x) => x.id === jobId);
+
+//       if (idx >= 0) {
+//         arr.splice(idx, 1);
+//         setSaved(false);
+//         toast.success("Removed from Saved Jobs");
+//       } else {
+//         arr.unshift({
+//           id: jobId,
+//           title,
+//           company,
+//           savedAt: new Date().toISOString(),
+//           href: `/jobs/${jobId}`,
+//         });
+//         setSaved(true);
+//         toast.success("Saved to your Saved Jobs");
+//       }
+//       localStorage.setItem(LS_KEY, JSON.stringify(arr));
+//       window.dispatchEvent(new CustomEvent("saved-jobs-changed"));
+//     } catch {
+//       toast.error("Failed to update Saved Jobs");
+//     }
+//   };
 
 //   const onShare = async () => {
 //     const url =
@@ -31,7 +68,7 @@
 //         });
 //       } else {
 //         await navigator.clipboard.writeText(url);
-//         alert("Link copied to clipboard");
+//         toast.success("Link copied to clipboard");
 //       }
 //     } catch {}
 //   };
@@ -39,7 +76,7 @@
 //   return (
 //     <div className="flex shrink-0 items-center gap-2">
 //       <button
-//         onClick={() => setSaved((s) => !s)}
+//         onClick={onToggleSave}
 //         className={`inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors hover:bg-accent ${
 //           saved ? "text-primary" : "text-muted-foreground"
 //         }`}
@@ -58,7 +95,7 @@
 //   );
 // }
 
-// /** Komponen kecil “Posted x ago”, dihitung real-time di client */
+// /** ====== “Posted x ago”, dihitung real-time di client ====== */
 // export function PostedAgo({ postedAtISO }: { postedAtISO: string }) {
 //   const [text, setText] = React.useState("Posted just now");
 
@@ -83,23 +120,57 @@
 //   return <span className="text-xs text-muted-foreground">{text}</span>;
 // }
 
-// /** Tombol Apply Now dengan toast sukses (dummy apply) */
+// /** ====== Apply Now → simpan ke localStorage("appliedJobs") ====== */
 // export function ApplyNowButton({
 //   jobId,
+//   title,
+//   company,
 //   label = "Apply Now",
 // }: {
 //   jobId: string;
+//   title: string;
+//   company: string;
 //   label?: string;
 // }) {
 //   const [applied, setApplied] = React.useState(false);
-//   const router = useRouter();
+//   const LS_KEY = "appliedJobs";
+
+//   React.useEffect(() => {
+//     if (typeof window === "undefined") return;
+//     try {
+//       const raw = localStorage.getItem(LS_KEY);
+//       const arr: any[] = raw ? JSON.parse(raw) : [];
+//       setApplied(arr.some((x) => x.id === jobId));
+//     } catch {}
+//   }, [jobId]);
 
 //   const onApply = () => {
 //     if (applied) return;
-//     setApplied(true);
-//     toast.success("Job successfully applied");
-//     // kalau mau refresh state lain (mis. badge "Applied"), bisa:
-//     // setTimeout(() => router.refresh(), 250);
+
+//     try {
+//       const raw = localStorage.getItem(LS_KEY);
+//       const arr: any[] = raw ? JSON.parse(raw) : [];
+
+//       // hindari duplikat
+//       if (!arr.some((x) => x.id === jobId)) {
+//         arr.unshift({
+//           id: jobId,
+//           title,
+//           company,
+//           appliedAt: new Date().toISOString(),
+//           status: "active", // default
+//           href: `/jobs/${jobId}`,
+//         });
+//         localStorage.setItem(LS_KEY, JSON.stringify(arr));
+//         // beri tahu dashboard
+//         window.dispatchEvent(new CustomEvent("applied-jobs-changed"));
+//       }
+
+//       setApplied(true);
+//       toast.success("Job successfully applied");
+//     } catch {
+//       toast.error("Failed to save applied job");
+//     }
 //   };
 
 //   return (
@@ -122,11 +193,10 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { Bookmark, Share2 } from "lucide-react";
 import { toast } from "sonner";
 
-/** ====== Save + Share (sinkron dengan SavedJobsClient) ====== */
+/** ====== Save + Share (tetap seperti sebelumnya, sinkron Saved Jobs) ====== */
 export default function SaveShare({
   jobId,
   title,
@@ -139,9 +209,7 @@ export default function SaveShare({
   const [saved, setSaved] = React.useState(false);
   const LS_KEY = "savedJobs";
 
-  // cek status tersimpan saat mount
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
     try {
       const raw = localStorage.getItem(LS_KEY);
       const arr: any[] = raw ? JSON.parse(raw) : [];
@@ -154,14 +222,11 @@ export default function SaveShare({
       const raw = localStorage.getItem(LS_KEY);
       const arr: any[] = raw ? JSON.parse(raw) : [];
       const idx = arr.findIndex((x) => x.id === jobId);
-
       if (idx >= 0) {
-        // hapus dari saved
         arr.splice(idx, 1);
         setSaved(false);
         toast.success("Removed from Saved Jobs");
       } else {
-        // tambahkan minimal data agar tampil rapi di dashboard
         arr.unshift({
           id: jobId,
           title,
@@ -173,7 +238,6 @@ export default function SaveShare({
         toast.success("Saved to your Saved Jobs");
       }
       localStorage.setItem(LS_KEY, JSON.stringify(arr));
-      // beri tahu dashboard untuk refresh daftar
       window.dispatchEvent(new CustomEvent("saved-jobs-changed"));
     } catch {
       toast.error("Failed to update Saved Jobs");
@@ -221,7 +285,7 @@ export default function SaveShare({
   );
 }
 
-/** ====== “Posted x ago”, dihitung real-time di client ====== */
+/** ====== “Posted x ago” (real-time) ====== */
 export function PostedAgo({ postedAtISO }: { postedAtISO: string }) {
   const [text, setText] = React.useState("Posted just now");
 
@@ -229,7 +293,7 @@ export function PostedAgo({ postedAtISO }: { postedAtISO: string }) {
     function rel() {
       const now = Date.now();
       const t = new Date(postedAtISO).getTime();
-      const diff = Math.max(0, Math.floor((now - t) / 1000)); // seconds
+      const diff = Math.max(0, Math.floor((now - t) / 1000));
       if (diff < 60) return `Posted ${diff}s ago`;
       const m = Math.floor(diff / 60);
       if (m < 60) return `Posted ${m}m ago`;
@@ -239,42 +303,76 @@ export function PostedAgo({ postedAtISO }: { postedAtISO: string }) {
       return `Posted ${d}d ago`;
     }
     setText(rel());
-    const id = setInterval(() => setText(rel()), 30000);
+    const id = setInterval(() => setText(rel()), 30_000);
     return () => clearInterval(id);
   }, [postedAtISO]);
 
   return <span className="text-xs text-muted-foreground">{text}</span>;
 }
 
-/** ====== Apply Now dengan toast sukses (dummy apply) ====== */
+/** ====== Apply Now → simpan ke localStorage('appliedJobs') + refresh dashboard ====== */
 export function ApplyNowButton({
   jobId,
   label = "Apply Now",
+  meta,
 }: {
   jobId: string;
   label?: string;
+  meta?: {
+    title?: string;
+    company?: string;
+    locationText?: string; // "District, City, Province"
+    salaryText?: string; // "UZS 50–80M / month"
+    typeLabel?: string; // "Full Time"
+    policyLabel?: string; // "Remote/Hybrid/WFO"
+    status?: "active" | "expired";
+    href?: string;
+  };
 }) {
   const [applied, setApplied] = React.useState(false);
-  const router = useRouter();
+  const LS_KEY = "appliedJobs";
 
   const onApply = () => {
     if (applied) return;
-    setApplied(true);
-    toast.success("Job successfully applied");
-    // contoh: refresh data lain jika perlu
-    // setTimeout(() => router.refresh(), 250);
+
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      const arr: any[] = raw ? JSON.parse(raw) : [];
+
+      // kalau sudah ada, jangan double
+      if (!arr.some((x) => x.id === jobId)) {
+        arr.unshift({
+          id: jobId,
+          appliedAt: new Date().toISOString(),
+          status: meta?.status ?? "active",
+          title: meta?.title ?? undefined,
+          company: meta?.company ?? undefined,
+          locationText: meta?.locationText ?? undefined,
+          salaryText: meta?.salaryText ?? undefined,
+          typeLabel: meta?.typeLabel ?? undefined,
+          policyLabel: meta?.policyLabel ?? undefined,
+          href: meta?.href ?? `/jobs/${jobId}`,
+        });
+        localStorage.setItem(LS_KEY, JSON.stringify(arr));
+      }
+
+      setApplied(true);
+      window.dispatchEvent(new CustomEvent("applied-jobs-changed"));
+      toast.success("Job successfully applied");
+    } catch {
+      toast.error("Failed to save application");
+    }
   };
 
   return (
     <button
       onClick={onApply}
       disabled={applied}
-      className={`inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-medium transition
-        ${
-          applied
-            ? "bg-muted text-muted-foreground cursor-default"
-            : "bg-primary text-primary-foreground hover:opacity-90"
-        }`}
+      className={`inline-flex h-10 items-center justify-center rounded-md px-5 text-sm font-medium transition ${
+        applied
+          ? "cursor-default bg-muted text-muted-foreground"
+          : "bg-primary text-primary-foreground hover:opacity-90"
+      }`}
       aria-label="Apply for this job"
     >
       {applied ? "Applied" : label}
