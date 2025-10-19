@@ -29,8 +29,7 @@ export default function RegisterPage({
       redirect("/register?error=Email already registered");
 
     try {
-      registerHandler(name, email, password, username);
-      redirect("/");
+      await registerHandler(name, email, password, username);
     } catch (error) {
       console.log(error);
     }
