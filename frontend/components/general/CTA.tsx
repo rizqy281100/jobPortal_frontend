@@ -11,11 +11,12 @@ export default function CTA() {
         <div className="grid items-center gap-8 p-6 md:grid-cols-2 md:p-10 lg:p-12">
           {/* Left: copy + button */}
           <div>
-            <h2 className="text-3xl font-extrabold leading-tight md:text-4xl">
+            <h2 className="text-3xl font-extrabold text-white dark:text-white leading-tight md:text-4xl">
               Stand out to leading recruiters
-              <br className="hidden md:block" /> nationwide
+              <br className="hidden md:block text-white dark:text-white" />{" "}
+              nationwide
             </h2>
-            <p className="mt-3 max-w-xl text-primary-foreground/90">
+            <p className="mt-3 max-w-xl text-white dark:text-white">
               Compete in the biggest skill contest and get noticed by top
               companies. Win prizes and unlock exclusive opportunities.
             </p>

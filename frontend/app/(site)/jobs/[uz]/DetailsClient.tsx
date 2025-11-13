@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 // "use client";
 
 // import * as React from "react";
@@ -192,7 +190,6 @@
 //   );
 // }
 
->>>>>>> 38f30502643f1fa9177a2480584f53342b0321f5
 "use client";
 
 import * as React from "react";

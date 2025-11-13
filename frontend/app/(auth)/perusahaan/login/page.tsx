@@ -1,109 +1,142 @@
-// app/(auth)/perusahaan/login/page.tsx
-import { redirect } from "next/navigation";
-import { verifyUser, toPublicUser } from "@/lib/dummy-users";
-import { cookies } from "next/headers";
+"use client";
+import { redirect, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { createSession } from "@/lib/session";
+import { findUserByEmail } from "@/lib/dummy-users";
+import { loginAction } from "./actions";
+import { useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react"; // pastikan sudah install lucide-react
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
-/* ========================================================================== */
-/* Dummy check apakah perusahaan sudah terdaftar                              */
-/* ========================================================================== */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function checkCompanyRegistered(): Promise<boolean> {
-  return true;
-}
+export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const fromRegister = searchParams.get("fromRegister");
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [register, setRegister] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
-/* ========================================================================== */
-/* Server Action untuk login perusahaan                                       */
-/* ========================================================================== */
-async function loginCompanyAction(formData: FormData): Promise<void> {
-  "use server";
+  useEffect(() => {
+    if (fromRegister === "true") {
+      setRegister("Registration successful!");
+    }
+  }, [fromRegister]);
 
-  const email = formData.get("email")?.toString() || "";
-  const password = formData.get("password")?.toString() || "";
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
 
-  const user = verifyUser(email, password);
+    const formData = new FormData(e.currentTarget);
+    const result = await loginAction(formData);
 
-  if (!user) {
-    redirect("/perusahaan/login?error=invalid");
+    if (result?.success) {
+      setSuccess("Login successful!");
+      router.push("/dashboard-recruiters"); // redirect di client
+    } else {
+      setError(result?.error || "Login failed");
+    }
   }
-
-  if (user.role !== "employer") {
-    redirect("/perusahaan/login?error=forbidden");
-  }
-
-  const publicUser = toPublicUser(user);
-  (await cookies()).set("session_user", JSON.stringify(publicUser), {
-    httpOnly: true,
-  });
-
-redirect("/dashboard-recruiters");
-
-}
-
-/* ========================================================================== */
-/* Component utama                                                            */
-/* ========================================================================== */
-export default function CompanyLoginPage() {
-  // Kalau mau async check, bisa pakai useEffect client-side, bukan langsung di sini
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
-      <div className="w-full max-w-md rounded-xl border bg-white p-6 shadow">
-        <h1 className="text-2xl font-semibold mb-4 text-center text-gray-800">
-          Login Perusahaan
-        </h1>
+    <main className="container mx-auto max-w-md px-4 py-10">
+      <div className="rounded-xl border bg-card p-6 shadow-sm">
+        <h1 className="mb-1 text-2xl font-bold">Log in</h1>
+        <p className="mb-6 text-sm text-muted-foreground">
+          Gunakan akun demo:&nbsp;
+          <b>aisha@example.com</b> / <b>password</b>
+        </p>
 
-        <form action={loginCompanyAction} className="space-y-4" noValidate>
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email Perusahaan
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              defaultValue="aisha@example.com"
-              className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-primary focus:ring-primary"
+        {error && (
+          <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
+            {error}
+          </p>
+        )}
+        {success && (
+          <p className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-300">
+            {success}
+          </p>
+        )}
+        {register && (
+          <p className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-300">
+            {register}
+          </p>
+        )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <LabelInputContainer className="mb-4">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              name="username"
+              placeholder="TylerDurden"
+              type="text"
             />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              required
-              defaultValue="password"
-              className="mt-1 w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-primary focus:ring-primary"
-            />
-          </div>
-
+          </LabelInputContainer>
+          <LabelInputContainer className="mb-4">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                placeholder="Password"
+                type={showPassword ? "text" : "password"}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </LabelInputContainer>
           <button
             type="submit"
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 transition-colors"
+            className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90"
           >
-            Masuk
+            Log In
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Belum punya akun?{" "}
-          <a
-            href="/perusahaan/register"
-            className="text-blue-600 hover:underline font-medium"
+        <div className="mt-6 flex items-center justify-between text-sm">
+          <Link
+            href="/reset-password"
+            className="text-primary underline-offset-4 hover:underline"
           >
-            Daftar Perusahaan
-          </a>
-        </p>
+            Forgot password?
+          </Link>
+          <Link
+            href="/perusahaan/register"
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            Create account
+          </Link>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
+
+const BottomGradient = () => {
+  return (
+    <>
+      <span className="absolute inset-x-0 -bottom-px block h-px w-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-0 transition duration-500 group-hover/btn:opacity-100" />
+      <span className="absolute inset-x-10 -bottom-px mx-auto block h-px w-1/2 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 blur-sm transition duration-500 group-hover/btn:opacity-100" />
+    </>
+  );
+};
+
+const LabelInputContainer = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={cn("flex w-full flex-col space-y-2", className)}>
+      {children}
+    </div>
+  );
+};

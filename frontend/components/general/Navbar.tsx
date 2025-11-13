@@ -32,6 +32,12 @@ type UserSession = {
 } | null;
 
 /* ==== Defaults ==== */
+const recruiterNavItems: NavItem[] = [
+  { href: "/", label: "Home" },
+  { href: "/dashboard-recruiters", label: "Dashboard" },
+  { href: "/about", label: "About" },
+  { href: "/insights", label: "Insights" },
+];
 const defaultNavItems: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/jobs", label: "Jobs" },
@@ -70,6 +76,16 @@ export default function Navbar({
   brand?: { name: string; href: string };
   session?: UserSession;
 }) {
+  let items = navItems || defaultNavItems;
+
+  // 🔁 Ganti secara dinamis tergantung role
+  if (session?.role === "recruiter") {
+    items = [
+      { href: "/dashboard-recruiters", label: "Dashboard" },
+      { href: "/jobs", label: "My Jobs" },
+      { href: "/post", label: "Post Job" },
+    ];
+  }
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       {/* -------------------- Desktop & Tablet (≥md) -------------------- */}
@@ -83,7 +99,7 @@ export default function Navbar({
 
         {/* Center: Nav */}
         <nav className="flex items-center justify-center gap-1">
-          {navItems.map((item) => (
+          {items.map((item) => (
             <NavLink key={item.href} href={item.href}>
               {item.label}
             </NavLink>
@@ -95,12 +111,26 @@ export default function Navbar({
           {session ? (
             <>
               {/* Dropdown Akun */}
-              <AccountDropdown name={session.name} />
+              <AccountDropdown name={session.name} role={session.role} />
 
               {/* 🔽 Tombol Login Perusahaan muncul di sebelah dropdown */}
-              <Button asChild variant="outline">
-                <Link href="/perusahaan/login">Recruiter</Link>
-              </Button>
+              {session.role !== "recruiter" && (
+                <>
+                  {/* 🔽 Tombol Login Perusahaan versi mobile */}
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/perusahaan/login">Recruiter</Link>
+                  </Button>
+                </>
+              )}
+
+              {session.role === "recruiter" && (
+                <>
+                  {/* 🔽 Tombol Login Perusahaan versi mobile */}
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/">Post A Job</Link>
+                  </Button>
+                </>
+              )}
 
               <ThemeToggle />
             </>
@@ -129,12 +159,19 @@ export default function Navbar({
         <div className="flex items-center gap-1">
           {session ? (
             <>
-              <AccountDropdown name={session.name} compact />
-
-              {/* 🔽 Tombol Login Perusahaan versi mobile */}
-              <Button asChild size="sm" variant="outline">
-                <Link href="/perusahaan/login">Recruiter</Link>
-              </Button>
+              <AccountDropdown
+                name={session.name}
+                role={session.role}
+                compact
+              />
+              {session.role !== "recruiter" && (
+                <>
+                  {/* 🔽 Tombol Login Perusahaan versi mobile */}
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/perusahaan/login">Recruitesr</Link>
+                  </Button>
+                </>
+              )}
 
               <ThemeToggle />
             </>
@@ -158,9 +195,11 @@ export default function Navbar({
 /* ============================ Account Dropdown ============================ */
 function AccountDropdown({
   name,
+  role,
   compact = false,
 }: {
   name: string;
+  role: string;
   compact?: boolean;
 }) {
   const first = name.split(" ")[0];
@@ -191,35 +230,28 @@ function AccountDropdown({
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {/* My Profile → Dashboard (Overview) */}
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            My Profile
-          </Link>
-        </DropdownMenuItem>
-
         {/* Application Status → Dashboard (Applied tab) */}
-        <DropdownMenuItem asChild>
-          <Link
-            href="/dashboard-candidates"
-            className="flex items-center gap-2"
-          >
-            <FileText className="h-4 w-4" />
-            Dashboard Candidates
-          </Link>
-        </DropdownMenuItem>
-
-        {/* Settings → Dashboard (Settings tab) */}
-        <DropdownMenuItem asChild>
-          <Link
-            href="/dashboard?tab=settings"
-            className="flex items-center gap-2"
-          >
-            <SettingsIcon className="h-4 w-4" />
-            Settings
-          </Link>
-        </DropdownMenuItem>
+        {role !== "recruiter" ? (
+          <DropdownMenuItem asChild>
+            <Link
+              href="/dashboard-candidates"
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Dashboard
+            </Link>
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem asChild>
+            <Link
+              href="/dashboard-recruiters"
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Dashboard
+            </Link>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuSeparator />
 

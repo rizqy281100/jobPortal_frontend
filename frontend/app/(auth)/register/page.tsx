@@ -1,138 +1,6 @@
-// "use client";
-
-// import { redirect } from "next/navigation";
-// import Link from "next/link";
-// import { createUser, emailExists } from "@/lib/dummy-users";
-// import { createSession } from "@/lib/session";
-// import { BodyRegister } from "@/lib/services/auth/types";
-// import { AuthState } from "../../../lib/services/auth/state";
-
-// export default function RegisterPage({
-//   searchParams,
-// }: {
-//   searchParams?: { error?: string };
-// }) {
-//   const { registerUser } = AuthState();
-//   // const error = searchParams?.error;
-
-//   async function registerAction(formData: FormData) {
-//     const name = String(formData.get("name") || "").trim();
-//     const username = String(formData.get("username") || "");
-//     const email = String(formData.get("email") || "")
-//       .trim()
-//       .toLowerCase();
-//     const password = String(formData.get("password") || "");
-
-//     if (!name || !email || !password || !username)
-//       redirect("/register?error=Please fill all fields");
-//     if (emailExists(email))
-//       redirect("/register?error=Email already registered");
-
-//     try {
-//       await registerHandler(name, email, password, username);
-//     } catch (error) {
-//       console.log(error);
-//     }
-
-//     // const user = createUser({ name, email, password, username });
-//     // await createSession({
-//     //   id: user.id,
-//     //   name: user.name,
-//     //   email: user.email,
-//     //   role: user.role,
-//     // });
-//   }
-
-//   const registerHandler = (
-//     name: string,
-//     email: string,
-//     password: string,
-//     username: string
-//   ) => {
-//     const payload: BodyRegister = {
-//       name: name,
-//       username: username,
-//       password: password,
-//       email: email,
-//     };
-
-//     registerUser(payload);
-//   };
-
-//   return (
-//     <main className="container mx-auto max-w-md px-4 py-10">
-//       <div className="rounded-xl border bg-card p-6 shadow-sm">
-//         <h1 className="mb-1 text-2xl font-bold">Create account</h1>
-//         <p className="mb-6 text-sm text-muted-foreground">
-//           Registrasi dummy (non-persisten).
-//         </p>
-
-//         {/* {error && (
-//           <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
-//             {error}
-//           </p>
-//         )} */}
-
-//         <form action={registerAction} className="space-y-4">
-//           <div>
-//             <label className="mb-1 block text-sm">Full name</label>
-//             <input
-//               name="name"
-//               required
-//               className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-primary"
-//             />
-//           </div>
-//           <div>
-//             <label className="mb-1 block text-sm">Username</label>
-//             <input
-//               name="username"
-//               required
-//               className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-primary"
-//             />
-//           </div>
-//           <div>
-//             <label className="mb-1 block text-sm">Email</label>
-//             <input
-//               name="email"
-//               type="email"
-//               required
-//               className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-primary"
-//             />
-//           </div>
-//           <div>
-//             <label className="mb-1 block text-sm">Password</label>
-//             <input
-//               name="password"
-//               type="password"
-//               required
-//               className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-primary"
-//             />
-//           </div>
-//           <button
-//             type="submit"
-//             className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90"
-//           >
-//             Create account
-//           </button>
-//         </form>
-
-//         <div className="mt-6 text-center text-sm">
-//           Already have an account?{" "}
-//           <Link
-//             href="/login"
-//             className="text-primary underline-offset-4 hover:underline"
-//           >
-//             Log in
-//           </Link>
-//         </div>
-//       </div>
-//     </main>
-//   );
-// }
-
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -141,14 +9,32 @@ import {
   IconBrandGoogleFilled,
   IconBrandOnlyfans,
 } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
+import { registerAction } from "./actions";
+import { Eye, EyeOff } from "lucide-react"; // pastikan sudah install lucide-react
 
-export default function SignupFormDemo() {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+export default function RegisterPage() {
+  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    console.log("Form submitted");
-  };
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    console.log(formData);
+    const result = await registerAction(formData);
+
+    if (result?.success) {
+      setSuccess("Registration successful!");
+      router.push("/login?fromRegister=true");
+    } else {
+      setError(result?.error || "Registration failed");
+    }
+  }
   return (
-    <div className="shadow-input mx-auto w-full max-w-md rounded-none bg-white p-4 md:rounded-2xl md:p-8 dark:bg-black">
+    <div className="shadow-input mx-auto w-full max-w-md rounded-none bg-white p-4 sm:rounded-2xl sm:p-8 dark:bg-black mt-20">
       {/* <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-200">
         Welcome to JobPortal
       </h2>
@@ -160,20 +46,59 @@ export default function SignupFormDemo() {
         <div className="mb-4 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
           <LabelInputContainer>
             <Label htmlFor="firstname">First name</Label>
-            <Input id="firstname" placeholder="Tyler" type="text" />
+            <Input
+              id="firstname"
+              name="firstname"
+              placeholder="Tyler"
+              type="text"
+            />
           </LabelInputContainer>
           <LabelInputContainer>
             <Label htmlFor="lastname">Last name</Label>
-            <Input id="lastname" placeholder="Durden" type="text" />
+            <Input
+              id="lastname"
+              name="lastname"
+              placeholder="Durden"
+              type="text"
+            />
           </LabelInputContainer>
         </div>
+
+        <LabelInputContainer className="mb-4">
+          <Label htmlFor="username">Username</Label>
+          <Input
+            id="username"
+            name="username"
+            placeholder="TylerDurden"
+            type="text"
+          />
+        </LabelInputContainer>
         <LabelInputContainer className="mb-4">
           <Label htmlFor="email">Email Address</Label>
-          <Input id="email" placeholder="projectmayhem@fc.com" type="email" />
+          <Input
+            id="email"
+            name="email"
+            placeholder="projectmayhem@fc.com"
+            type="email"
+          />
         </LabelInputContainer>
         <LabelInputContainer className="mb-4">
           <Label htmlFor="password">Password</Label>
-          <Input id="password" placeholder="••••••••" type="password" />
+          <div className="relative">
+            <Input
+              id="password"
+              name="password"
+              placeholder="password"
+              type={showPassword ? "text" : "password"}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </LabelInputContainer>
 
         <button
@@ -204,16 +129,6 @@ export default function SignupFormDemo() {
             <IconBrandGoogleFilled className="h-4 w-4 text-red-500  dark:text-neutral-300" />
             <span className="text-sm text-neutral-700 dark:text-neutral-300">
               Google
-            </span>
-            <BottomGradient />
-          </button>
-          <button
-            className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_#262626]"
-            type="submit"
-          >
-            <IconBrandOnlyfans className="h-4 w-4 text-blue-500 dark:text-neutral-300" />
-            <span className="text-sm text-neutral-700 dark:text-neutral-300">
-              OnlyFans
             </span>
             <BottomGradient />
           </button>
