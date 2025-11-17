@@ -1,5 +1,5 @@
-import { readSession } from "@/lib/session";
-import { redirect } from "next/navigation";
+"use client";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -17,14 +17,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, CheckCircle, XCircle, Users } from "lucide-react";
-import Link from "next/link";
-// import SavedJobsClient from "./SavedJobsClient";
-// import AppliedJobsClient from "./AppliedJobsClient";
-// import UserSettingsClient from "./UserSettingsClient";
+import AppliedJobsClient from "./AppliedJobsClient";
+import { useAppSelector } from "@/store/hooks";
 
-export default async function DashboardRecruiterPage() {
-  const session = await readSession();
-  if (!session) redirect("/login");
+export default function DashboardRecruiterPage() {
+  const { user } = useAppSelector((state) => state.auth);
+
+  // User sudah pasti ada karena sudah diproteksi di layout
+  const userName = user?.name || "User";
+
   const jobs = [
     {
       title: "UI/UX Designer",
@@ -55,12 +56,13 @@ export default async function DashboardRecruiterPage() {
       applications: 740,
     },
   ];
+
   return (
     <div className="p-6 space-y-6">
       <header className="rounded-xl border bg-card p-5">
         <h1 className="text-2xl font-semibold">Dashboard Recruiter</h1>
         <p className="text-sm text-muted-foreground">
-          Welcome, {session.name}! Manage your job postings and candidates here.
+          Welcome, {userName}! Manage your job postings and candidates here.
         </p>
       </header>
 
@@ -204,16 +206,26 @@ export default async function DashboardRecruiterPage() {
           </TabsContent>
 
           <TabsContent value="applied">
-            {/* <AppliedJobsClient /> */}
+            <AppliedJobsClient />
           </TabsContent>
 
           {/* ======= Saved Jobs ======= */}
           <TabsContent value="favorites">
-            {/* <SavedJobsClient /> */}
+            <div className="rounded-lg border bg-background p-6 shadow-sm">
+              <h2 className="text-lg font-semibold mb-2">Saved Candidates</h2>
+              <p className="text-sm text-muted-foreground">
+                View candidates you've saved for future consideration.
+              </p>
+            </div>
           </TabsContent>
 
           <TabsContent value="user_settings">
-            {/* <UserSettingsClient /> */}
+            <div className="rounded-lg border bg-background p-6 shadow-sm">
+              <h2 className="text-lg font-semibold mb-2">User Settings</h2>
+              <p className="text-sm text-muted-foreground">
+                Manage your account settings and preferences.
+              </p>
+            </div>
           </TabsContent>
         </div>
       </Tabs>

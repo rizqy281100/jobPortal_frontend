@@ -1,56 +1,63 @@
-import "server-only";
+// lib/session.ts
 import { cookies } from "next/headers";
-import { unstable_noStore as noStore } from "next/cache"; // ⟵ add this
-import crypto from "crypto";
 
-const COOKIE_NAME = "jp_session";
-const secret = process.env.AUTH_SECRET || "dev-secret-change-me";
+const COOKIE_NAME = "refreshToken";
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  maxAge: 60 * 60 * 24 * 7, // 7 days
+  path: "/",
+};
 
-export type Session = { id: string; name: string; email: string; role: string };
+/**
+ * Create session dengan menyimpan refreshToken di httpOnly cookie
+ * PENTING: Hanya simpan refreshToken, JANGAN simpan accessToken di cookie
+ */
+export async function createSession(refreshToken: string) {
+  const cookieStore = await cookies();
 
-function sign(value: string) {
-  const mac = crypto.createHmac("sha256", secret).update(value).digest("hex");
-  return `${value}.${mac}`;
-}
-function verify(signed: string) {
-  const i = signed.lastIndexOf(".");
-  if (i < 0) return null;
-  const raw = signed.slice(0, i);
-  return sign(raw) === signed ? raw : null;
-}
-
-export async function createSession(s: Session) {
-  const jar = await cookies();
-  const raw = JSON.stringify(s);
-  const token = sign(Buffer.from(raw).toString("base64url"));
-  jar.set({
-    name: COOKIE_NAME,
-    value: token,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  cookieStore.set(COOKIE_NAME, refreshToken, COOKIE_OPTIONS);
 }
 
-export async function readSession(): Promise<Session | null> {
-  noStore(); // ⟵ force dynamic for this read
-  const jar = await cookies();
-  const token = jar.get(COOKIE_NAME)?.value;
-  if (!token) return null;
+/**
+ * Get refresh token dari cookie
+ */
+export async function getSession() {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get(COOKIE_NAME);
 
-  const raw = verify(token);
-  if (!raw) return null;
+  return refreshToken?.value || null;
+}
 
-  try {
-    return JSON.parse(Buffer.from(raw, "base64url").toString());
-  } catch {
-    return null;
+/**
+ * Verify apakah session valid
+ * Next.js 15: Untuk production, gunakan JWT verify di sini
+ */
+export async function verifySession(): Promise<boolean> {
+  const refreshToken = await getSession();
+
+  if (!refreshToken) {
+    return false;
   }
+
+  // TODO: Add JWT verification jika diperlukan
+  // Untuk sekarang, cukup cek keberadaan token
+  // Backend akan validasi saat refresh token dipanggil
+  return true;
 }
 
-export async function clearSession() {
-  const jar = await cookies();
-  jar.delete(COOKIE_NAME);
+/**
+ * Delete session (logout)
+ */
+export async function deleteSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(COOKIE_NAME);
+}
+
+/**
+ * Update refresh token
+ */
+export async function updateSession(newRefreshToken: string) {
+  await createSession(newRefreshToken);
 }

@@ -1,7 +1,8 @@
-import { readSession } from "@/lib/session";
+// import { readSession } from "@/lib/session";
 import DashboardClient, { JobLite, JobStatus } from "./DashboardClient";
 import Link from "next/link";
 
+import { useAppSelector } from "@/store/hooks";
 // OPTIONAL breadcrumbs (ringkas & responsif)
 function Crumbs() {
   return (
@@ -20,7 +21,8 @@ function Crumbs() {
 }
 
 export default async function DashboardPage() {
-  const session = await readSession();
+  const { user } = useAppSelector((state) => state.auth);
+  // const session = await readSession();
 
   // --- Dummy data (ganti dengan data asli kalau sudah siap) ---
   const applied: JobLite[] = Array.from({ length: 23 }).map((_, i) => ({

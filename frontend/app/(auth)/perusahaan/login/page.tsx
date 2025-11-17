@@ -4,11 +4,14 @@ import Link from "next/link";
 import { createSession } from "@/lib/session";
 import { findUserByEmail } from "@/lib/dummy-users";
 import { loginAction } from "./actions";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Eye, EyeOff } from "lucide-react"; // pastikan sudah install lucide-react
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useAppDispatch } from "@/store/hooks";
+import { loginRequest, loginSuccess, loginFailed } from "@/store/authSlice";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
@@ -18,6 +21,10 @@ export default function LoginPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [register, setRegister] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const dispatch = useAppDispatch();
+
+  const redirectTo = searchParams.get("redirect") || "/";
 
   useEffect(() => {
     if (fromRegister === "true") {
@@ -25,20 +32,48 @@ export default function LoginPage() {
     }
   }, [fromRegister]);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
+    setError("");
 
     const formData = new FormData(e.currentTarget);
-    const result = await loginAction(formData);
 
-    if (result?.success) {
-      setSuccess("Login successful!");
-      router.push("/dashboard-recruiters"); // redirect di client
-    } else {
-      setError(result?.error || "Login failed");
-    }
-  }
+    // Dispatch loading state
+    dispatch(loginRequest());
+
+    startTransition(async () => {
+      try {
+        const result = await loginAction(formData);
+
+        if (result.success && result.token && result.user) {
+          // Simpan ke Redux
+          dispatch(
+            loginSuccess({
+              accessToken: result.token,
+              user: result.user,
+            })
+          );
+
+          toast.success("Login berhasil!");
+
+          // Redirect
+          router.push(redirectTo);
+          router.refresh();
+        } else {
+          // Login gagal
+          const errorMessage = result.message || "Login gagal";
+          setError(errorMessage);
+          dispatch(loginFailed(errorMessage));
+          toast.error(errorMessage);
+        }
+      } catch (err) {
+        const errorMessage = "Terjadi kesalahan";
+        setError(errorMessage);
+        dispatch(loginFailed(errorMessage));
+        toast.error(errorMessage);
+      }
+    });
+  };
   return (
     <main className="container mx-auto max-w-md px-4 py-10">
       <div className="rounded-xl border bg-card p-6 shadow-sm">
@@ -65,11 +100,11 @@ export default function LoginPage() {
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <LabelInputContainer className="mb-4">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">Username/Email</Label>
             <Input
               id="username"
               name="username"
-              placeholder="TylerDurden"
+              placeholder="Username or Email"
               type="text"
             />
           </LabelInputContainer>
@@ -107,7 +142,7 @@ export default function LoginPage() {
             Forgot password?
           </Link>
           <Link
-            href="/perusahaan/register"
+            href="/register"
             className="text-primary underline-offset-4 hover:underline"
           >
             Create account

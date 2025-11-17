@@ -1,20 +1,23 @@
-import { readSession } from "@/lib/session";
-import { redirect } from "next/navigation";
+"use client";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SavedJobsClient from "./SavedJobsClient";
 import AppliedJobsClient from "./AppliedJobsClient";
 import UserSettingsClient from "./UserSettingsClient";
+import { useAppSelector } from "@/store/hooks";
 
-export default async function DashboardCandidatePage() {
-  const session = await readSession();
-  if (!session) redirect("/login");
+export default function DashboardCandidatePage() {
+  const { user } = useAppSelector((state) => state.auth);
+
+  // User sudah pasti ada karena sudah diproteksi di layout
+  const userName = user?.name || "User";
 
   return (
     <div className="p-6 space-y-6">
       <header className="rounded-xl border bg-card p-5">
         <h1 className="text-2xl font-semibold">Dashboard Candidate</h1>
         <p className="text-sm text-muted-foreground">
-          Selamat datang, {session.name}! Kelola semua aktivitasmu di sini.
+          Selamat datang, {userName}! Kelola semua aktivitasmu di sini.
         </p>
       </header>
 

@@ -1,42 +1,22 @@
 import axios from "axios";
-
 /**
  * Base Axios instance
  */
+
+// localStorage.getItem("auth_token") || localStorage.getItem("auth_key");
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
+    // Authorization: token ? `Bearer ${token.replace("Bearer ", "")}` : undefined,
   },
-});
-
-/**
- * Middleware untuk nambah header dinamis (token, auth_key, dll)
- */
-apiClient.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token =
-      localStorage.getItem("auth_token") || localStorage.getItem("auth_key");
-
-    if (token) {
-      config.headers = config.headers ?? {};
-      if (token.startsWith("Bearer ") || token.match(/\./)) {
-        (config.headers as Record<string, string>)[
-          "Authorization"
-        ] = `Bearer ${token.replace("Bearer ", "")}`;
-      } else {
-        (config.headers as Record<string, string>)["auth_key"] = token;
-      }
-    }
-  }
-  console.log("API Request Config:", config);
-  return config;
 });
 
 /**
  * Modular API wrapper — tanpa import tipe tambahan
  */
+
 export const api = {
   async request<TResponse = unknown>(
     method: string,

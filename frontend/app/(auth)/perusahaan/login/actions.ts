@@ -1,44 +1,119 @@
+// app/(auth)/login/actions.ts
 "use server";
 
-import { api } from "@/lib/axios";
 import { createSession } from "@/lib/session";
+// import axios from "axios";
+import { api } from "@/lib/axios";
 
-export async function loginAction(formData: FormData) {
-  const email = String(formData.get("username") || "")
-    .trim()
-    .toLowerCase();
-  const password = String(formData.get("password") || "");
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
 
+const username = process.env.NEXT_PUBLIC_USERNAME_BASIC;
+const pass = process.env.NEXT_PUBLIC_PASSWORD_BASIC;
+const basicHeader =
+  username && pass
+    ? `Basic ${Buffer.from(`${username}:${pass}`).toString("base64")}`
+    : undefined;
+
+export interface LoginResponse {
+  success: boolean;
+  token?: string;
+  refreshToken?: string;
+  user?: {
+    id: string;
+    email: string;
+    name: string;
+    role: "user" | "recruiter";
+    avatar?: string;
+  };
+  message?: string;
+}
+
+export async function loginAction(formData: FormData): Promise<LoginResponse> {
   try {
-    const username = process.env.NEXT_PUBLIC_USERNAME_BASIC;
-    const pass = process.env.NEXT_PUBLIC_PASSWORD_BASIC;
+    const email = formData.get("username") as string;
+    const password = formData.get("password") as string;
 
-    const basicHeader =
-      username && pass
-        ? `Basic ${Buffer.from(`${username}:${pass}`).toString("base64")}`
-        : undefined;
+    if (!email || !password) {
+      return {
+        success: false,
+        message: "Email dan password harus diisi",
+      };
+    }
 
-    const response = await api.post<{ token: string; user: any }>(
-      "/users/login",
-      { email, password },
+    // Call backend API
+    const response = await api.post(
+      `/users/login`,
+      {
+        email,
+        password,
+      },
       {
         headers: basicHeader ? { Authorization: basicHeader } : undefined,
       }
     );
 
-    await createSession({
-      id: response?.data?.user?.id,
-      name: response?.data?.user?.name,
-      email: response?.data?.user?.email,
-      role: response?.data?.user?.role,
+    const { token, refreshToken, user } = response?.data;
+
+    if (!token || !refreshToken) {
+      return {
+        success: false,
+        message: "Response dari server tidak valid",
+      };
+    }
+
+    // Simpan refreshToken di httpOnly cookie
+    await createSession(refreshToken);
+
+    // Return token dan user ke client
+    // Client akan menyimpan ini di Redux
+    return {
+      success: true,
+      token,
+      user,
+    };
+  } catch (error: unknown) {
+    console.error("Login error:", error);
+
+    return {
+      success: false,
+      message: "Terjadi kesalahan pada server",
+    };
+  }
+}
+
+/**
+ * Register Action (Candidate)
+ */
+export async function registerAction(
+  formData: FormData
+): Promise<LoginResponse> {
+  try {
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    const response = await api.post(`/auth/register`, {
+      name,
+      email,
+      password,
+      role: "candidate",
     });
 
-    return { success: true };
-  } catch (err: any) {
-    const msg =
-      err?.response?.data?.message ||
-      err?.message ||
-      "Invalid email or password";
-    return { error: msg };
+    const { token, refreshToken, user } = response?.data;
+
+    await createSession(refreshToken);
+
+    return {
+      success: true,
+      token,
+      user,
+    };
+  } catch (error: unknown) {
+    console.error("Register error:", error);
+
+    return {
+      success: false,
+      message: "Terjadi kesalahan pada server",
+    };
   }
 }
