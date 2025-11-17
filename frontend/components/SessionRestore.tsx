@@ -32,7 +32,7 @@ export default function SessionRestore() {
       try {
         // Call refresh token endpoint untuk mendapatkan accessToken baru
         const response = await fetch(`${API_URL}/users/refresh-token`, {
-          method: "POST",
+          method: "PUT",
           headers: basicHeader ? { Authorization: basicHeader } : {},
           credentials: "include", // kirim cookie
         });

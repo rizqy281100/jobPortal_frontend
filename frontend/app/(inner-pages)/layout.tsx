@@ -1,22 +1,37 @@
+"use client";
+
 import Navbar from "@/components/general/Navbar";
 import Footer from "@/components/general/Footer";
-import { readSession } from "@/lib/session";
+import { useAppSelector } from "@/store/hooks";
 
-export default async function SiteLayout({
+export default function SiteLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await readSession();
+  const { isAuthenticated, isLoading, user } = useAppSelector(
+    (state) => state.auth
+  );
+
+  // Ambil session hanya jika user sudah loaded
+  const session =
+    !isLoading && user
+      ? {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        }
+      : null;
+
   return (
-    <>
-      <Navbar session={session ?? null} />
-      {/* Gate yang membaca ?login=success / ?logout=success */}
-      {/* <AuthToast /> */}
-      <main className="min-h-[70vh]">{children}</main>
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <Navbar session={session} />
+
+      {/* konten halaman */}
+      <main className="flex-1">{children}</main>
+
       <Footer />
-      {/* SATU Toaster global */}
-      {/* <Toaster position="bottom-right" richColors closeButton /> */}
-    </>
+    </div>
   );
 }

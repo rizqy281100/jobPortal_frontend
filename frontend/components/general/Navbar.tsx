@@ -222,13 +222,13 @@ function AccountDropdown({
 
     try {
       // Call logout API untuk hapus cookie
-      const response = await api.post(`${API_URL}/users/logout`, {
+      const response = await api.delete(`users/logout`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
 
-      if (response.status !== 200) {
+      if (response.code !== 200) {
         throw new Error("Logout failed");
       }
 
