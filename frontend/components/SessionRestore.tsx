@@ -4,6 +4,7 @@
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { loginSuccess, logout } from "@/store/authSlice";
+import { api } from "@/lib/axios";
 const username = process.env.NEXT_PUBLIC_USERNAME_BASIC;
 const pass = process.env.NEXT_PUBLIC_PASSWORD_BASIC;
 const basicHeader =
@@ -22,56 +23,38 @@ export default function SessionRestore() {
   );
 
   useEffect(() => {
-    // Jika sudah ada accessToken di Redux, skip
-    if (isAuthenticated && accessToken) {
-      return;
-    }
+    // Jika sudah login, tidak perlu restore session
+    if (isAuthenticated) return;
 
-    // Coba restore session dari server
     const restoreSession = async () => {
       try {
-        // Call refresh token endpoint untuk mendapatkan accessToken baru
-        const response = await fetch(`${API_URL}/users/refresh-token`, {
-          method: "PUT",
-          headers: basicHeader ? { Authorization: basicHeader } : {},
-          credentials: "include", // kirim cookie
-        });
+        // Panggil refresh token TANPA Authorization header
+        const response = await api.put(
+          "/users/refresh-token",
+          {},
+          {
+            headers: { Authorization: accessToken },
+            withCredentials: true, // penting untuk cookie refresh
+          }
+        );
 
-        if (!response.ok) {
-          throw new Error("Session restore failed");
-        }
+        // Jika server membalas token baru
+        const data = response.data;
 
-        const data = await response.json();
-
-        // Get user profile
-        // const userResponse = await fetch("/users/login", {
-        //   headers: {
-        //     Authorization: `Bearer ${data.accessToken}`,
-        //   },
-        // });
-
-        // if (!userResponse.ok) {
-        //   throw new Error("Get user failed");
-        // }
-
-        const userData = data.user;
-
-        // Update Redux state
         dispatch(
           loginSuccess({
             accessToken: data.token,
-            user: userData,
+            user: data.user,
           })
         );
-      } catch (error) {
-        console.error("Failed to restore session:", error);
-        // Jika gagal, clear state
-        dispatch(logout());
+      } catch (err) {
+        console.log("No active session");
+        dispatch(logout()); // biar bersih
       }
     };
 
     restoreSession();
-  }, [dispatch, isAuthenticated, accessToken]);
+  }, [isAuthenticated, dispatch]);
 
   return null; // Component ini tidak render apapun
 }
