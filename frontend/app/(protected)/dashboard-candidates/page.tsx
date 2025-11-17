@@ -14,7 +14,7 @@ export default async function DashboardCandidatePage() {
       <header className="rounded-xl border bg-card p-5">
         <h1 className="text-2xl font-semibold">Dashboard Candidate</h1>
         <p className="text-sm text-muted-foreground">
-          Selamat datang, {session.name}! Kelola semua aktivitasmu di sini.
+          Welcome, {session.name}! Manage your activities here.
         </p>
       </header>
 
