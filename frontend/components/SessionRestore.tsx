@@ -33,7 +33,7 @@ export default function SessionRestore() {
           "/users/refresh-token",
           {},
           {
-            headers: { Authorization: accessToken },
+            headers: { Authorization: basicHeader },
             withCredentials: true, // penting untuk cookie refresh
           }
         );
