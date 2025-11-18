@@ -39,7 +39,7 @@ export default function SessionRestore() {
         );
 
         // Jika server membalas token baru
-        const data = response.data;
+        const data = response?.data;
 
         dispatch(
           loginSuccess({
