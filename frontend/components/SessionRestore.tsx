@@ -3,7 +3,7 @@
 
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { loginSuccess, logout } from "@/store/authSlice";
+import { auth, loginSuccess, logout } from "@/store/authSlice";
 import { api } from "@/lib/axios";
 const username = process.env.NEXT_PUBLIC_USERNAME_BASIC;
 const pass = process.env.NEXT_PUBLIC_PASSWORD_BASIC;

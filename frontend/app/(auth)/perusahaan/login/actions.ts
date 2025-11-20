@@ -1,7 +1,7 @@
 // app/(auth)/login/actions.ts
 "use server";
 
-import { createSession } from "@/lib/session";
+import { createSession, refreshSession } from "@/lib/session";
 // import axios from "axios";
 import { api } from "@/lib/axios";
 
@@ -62,7 +62,9 @@ export async function loginAction(formData: FormData): Promise<LoginResponse> {
     }
 
     // Simpan refreshToken di httpOnly cookie
+
     await createSession(refreshToken, user.role);
+    await refreshSession(token, user);
 
     // Return token dan user ke client
     // Client akan menyimpan ini di Redux

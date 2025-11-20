@@ -11,13 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { createJobPost } from "./actions";
 import React, { useEffect } from "react";
 import { useState } from "react";
 import TagsInput from "@/components/TagsInput";
 import { SearchableSelect } from "@/components/SearchableSelect"; // sesuaikan path-mu
 import type { Option } from "@/components/SearchableSelect";
 import { api } from "@/lib/axios";
+import { useAppSelector } from "@/store/hooks";
 
 type AppliedItem = {
   id: string;
@@ -47,7 +48,8 @@ function fmtDate(iso: string) {
 }
 
 export default function PostJobForm() {
-  const [currency, setCurrency] = useState("USD");
+  const [deadline, setDeadline] = useState("");
+  const [currency, setCurrency] = useState("148");
   const [query, setQuery] = useState("UZS"); // ← default UZS
   const [currencyOptions, setCurrencyOptions] = useState<Option[]>([]);
   const [tags, setTags] = useState([]); // ← dari TagsInput
@@ -55,6 +57,7 @@ export default function PostJobForm() {
   const [maxSalary, setMaxSalary] = useState("");
   const [salaryError, setSalaryError] = useState("");
 
+  const { accessToken, user } = useAppSelector((state) => state.auth);
   function validateSalary(min: string, max: string) {
     const minVal = Number(min);
     const maxVal = Number(max);
@@ -82,7 +85,7 @@ export default function PostJobForm() {
       setCurrencyOptions(
         data?.map((item: any) => ({
           label: `${item.name} (${item.code})`,
-          value: item.code,
+          value: item.id,
         })) ?? []
       );
     } catch (err) {
@@ -93,7 +96,7 @@ export default function PostJobForm() {
 
   // 🔥 Load default: UZS
   useEffect(() => {
-    fetchCurrencies("UZS");
+    fetchCurrencies("");
   }, []);
 
   // 🔥 Debounce on typing
@@ -106,7 +109,18 @@ export default function PostJobForm() {
   }, [query]);
 
   return (
-    <form className="space-y-6">
+    <form
+      action={async (formData) => {
+        await createJobPost(formData);
+      }}
+      className="space-y-6"
+    >
+      <input type="hidden" name="accessToken" value={accessToken || ""} />
+      <input
+        type="hidden"
+        name="recruiter_id"
+        value={user?.recruiter_id || ""}
+      />
       {/* Job Title */}
       <div>
         <Label htmlFor="title">Job Title</Label>
@@ -121,6 +135,8 @@ export default function PostJobForm() {
       {/* Tags */}
       <div>
         <TagsInput value={tags} onChange={setTags} />
+
+        <input type="hidden" name="tags" value={JSON.stringify(tags)} />
       </div>
 
       {/* Salary */}
@@ -165,6 +181,7 @@ export default function PostJobForm() {
             className="mt-1"
             onClick={() => fetchCurrencies("UZS")}
           />
+          <input type="hidden" name="currency" value={currency} />
 
           {salaryError && (
             <p className="text-red-500 text-sm mt-1">{salaryError}</p>
@@ -183,7 +200,7 @@ export default function PostJobForm() {
         {/* Education */}
         <div className="col-span-1">
           <Label>Education</Label>
-          <Select>
+          <Select className="w-full">
             <SelectTrigger className="mt-1">
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
@@ -217,30 +234,34 @@ export default function PostJobForm() {
         {/* Job Type */}
         <div className="col-span-1">
           <Label>Job Type</Label>
-          <Select>
+          <Select name="employment_type_id">
             <SelectTrigger className="mt-1">
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="fulltime">Full Time</SelectItem>
-              <SelectItem value="parttime">Part Time</SelectItem>
-              <SelectItem value="internship">Internship</SelectItem>
-              <SelectItem value="contract">Contract</SelectItem>
-              <SelectItem value="remote">Remote</SelectItem>
+              <SelectItem value="1">Full Time</SelectItem>
+              <SelectItem value="2">Part Time</SelectItem>
+              <SelectItem value="4">Internship</SelectItem>
+              <SelectItem value="3">Contract</SelectItem>
+              <SelectItem value="5">Freelance</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {/* Vacancies */}
+        {/* Job Level (optional if needed) */}
         <div className="col-span-1">
-          <Label htmlFor="vacancies">Vacancies</Label>
-          <Input
-            id="vacancies"
-            name="vacancies"
-            type="number"
-            placeholder="Number of vacancies"
-            className="mt-1"
-          />
+          <Label>Job Level</Label>
+          <Select name="experience_level_id">
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Select..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Fresh Graduate</SelectItem>
+              <SelectItem value="2">Junior</SelectItem>
+              <SelectItem value="3">Middle</SelectItem>
+              <SelectItem value="4">Senior </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Expiration Date */}
@@ -248,27 +269,11 @@ export default function PostJobForm() {
           <Label htmlFor="expiration">Expiration Date</Label>
           <Input
             id="expiration"
-            name="expiration"
+            name="deadline"
             type="date"
             className="mt-1"
+            onChange={(e) => setDeadline(e.target.value)}
           />
-        </div>
-
-        {/* Job Level (optional if needed) */}
-        <div className="col-span-1">
-          <Label>Job Level</Label>
-          <Select>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Select..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="entry">Entry Level</SelectItem>
-              <SelectItem value="mid">Mid Level</SelectItem>
-              <SelectItem value="senior">Senior Level</SelectItem>
-              <SelectItem value="lead">Lead</SelectItem>
-              <SelectItem value="director">Director</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
       {/* Location */}

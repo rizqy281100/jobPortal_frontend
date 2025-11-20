@@ -14,25 +14,25 @@ const apiClient = axios.create({
 /**
  * Middleware untuk nambah header dinamis (token, auth_key, dll)
  */
-apiClient.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token =
-      localStorage.getItem("auth_token") || localStorage.getItem("auth_key");
+// apiClient.interceptors.request.use((config) => {
+//   if (typeof window !== "undefined") {
+//     const token =
+//       localStorage.getItem("auth_token") || localStorage.getItem("auth_key");
 
-    if (token) {
-      config.headers = config.headers ?? {};
-      if (token.startsWith("Bearer ") || token.match(/\./)) {
-        (config.headers as Record<string, string>)[
-          "Authorization"
-        ] = `Bearer ${token.replace("Bearer ", "")}`;
-      } else {
-        (config.headers as Record<string, string>)["auth_key"] = token;
-      }
-    }
-  }
-  console.log("API Request Config:", config);
-  return config;
-});
+//     if (token) {
+//       config.headers = config.headers ?? {};
+//       if (token.startsWith("Bearer ") || token.match(/\./)) {
+//         (config.headers as Record<string, string>)[
+//           "Authorization"
+//         ] = `Bearer ${token.replace("Bearer ", "")}`;
+//       } else {
+//         (config.headers as Record<string, string>)["auth_key"] = token;
+//       }
+//     }
+//   }
+//   console.log("API Request Config:", config);
+//   return config;
+// });
 
 /**
  * Modular API wrapper — tanpa import tipe tambahan
@@ -57,7 +57,10 @@ export const api = {
     url: string,
     config?: Record<string, unknown>
   ): Promise<TResponse> {
-    const res = await apiClient.get(url, config);
+    const res = await apiClient.get(url, {
+      withCredentials: true,
+      ...config,
+    });
     return res.data as TResponse;
   },
 
@@ -66,7 +69,10 @@ export const api = {
     data?: Record<string, unknown>,
     config?: Record<string, unknown>
   ): Promise<TResponse> {
-    const res = await apiClient.post(url, data, config);
+    const res = await apiClient.post(url, data, {
+      withCredentials: true,
+      ...config,
+    });
     return res.data as TResponse;
   },
 
@@ -75,7 +81,10 @@ export const api = {
     data?: Record<string, unknown>,
     config?: Record<string, unknown>
   ): Promise<TResponse> {
-    const res = await apiClient.put(url, data, config);
+    const res = await apiClient.put(url, data, {
+      withCredentials: true,
+      ...config,
+    });
     return res.data as TResponse;
   },
 
@@ -84,7 +93,10 @@ export const api = {
     data?: Record<string, unknown>,
     config?: Record<string, unknown>
   ): Promise<TResponse> {
-    const res = await apiClient.patch(url, data, config);
+    const res = await apiClient.patch(url, data, {
+      withCredentials: true,
+      ...config,
+    });
     return res.data as TResponse;
   },
 
@@ -92,7 +104,10 @@ export const api = {
     url: string,
     config?: Record<string, unknown>
   ): Promise<TResponse> {
-    const res = await apiClient.delete(url, config);
+    const res = await apiClient.delete(url, {
+      withCredentials: true,
+      ...config,
+    });
     return res.data as TResponse;
   },
 };

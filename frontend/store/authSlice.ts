@@ -14,6 +14,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isHydrated: boolean;
   error: string | null;
 }
 
@@ -21,7 +22,8 @@ const initialState: AuthState = {
   accessToken: null,
   user: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true, // penting!
+  isHydrated: false, // <--- kita tambah ini
   error: null,
 };
 
@@ -34,7 +36,6 @@ export const authSlice = createSlice({
       state.isLoading = true;
       state.error = null;
     },
-
     // Login Success
     loginSuccess: (
       state,
@@ -76,13 +77,23 @@ export const authSlice = createSlice({
       state.accessToken = null;
       state.user = null;
       state.isAuthenticated = false;
-      state.isLoading = false;
+      state.isLoading = true;
+      state.isHydrated = false; // pastikan di-set true saat logout
       state.error = null;
     },
 
     // Clear Error
     clearError: (state) => {
       state.error = null;
+    },
+
+    setHydrated(state) {
+      state.isHydrated = true;
+      state.isLoading = false;
+    },
+
+    finishHydrate: (state) => {
+      state.isHydrated = true;
     },
   },
 });
@@ -96,6 +107,8 @@ export const {
   setAccessToken,
   logout,
   clearError,
+  finishHydrate,
+  setHydrated,
 } = authSlice.actions;
 
 export default authSlice.reducer;

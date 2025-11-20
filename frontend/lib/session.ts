@@ -17,10 +17,34 @@ const COOKIE_OPTIONS = {
 export async function createSession(refreshToken: string, role?: string) {
   const cookieStore = await cookies();
 
-  cookieStore.set(COOKIE_NAME, refreshToken, COOKIE_OPTIONS);
+  cookieStore.set(COOKIE_NAME, refreshToken, {
+    ...COOKIE_OPTIONS,
+    httpOnly: false,
+  });
   cookieStore.set("role", role || "none", COOKIE_OPTIONS);
 }
 
+export async function refreshSession(
+  token: string,
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    avatar?: string;
+  }
+) {
+  const cookieStore = await cookies();
+
+  cookieStore.set("accessToken", token, {
+    ...COOKIE_OPTIONS,
+    httpOnly: false,
+  });
+  cookieStore.set("user", JSON.stringify(user), {
+    ...COOKIE_OPTIONS,
+    httpOnly: false,
+  });
+}
 /**
  * Get refresh token dari cookie
  */
@@ -54,6 +78,9 @@ export async function verifySession(): Promise<boolean> {
 export async function deleteSession() {
   const cookieStore = await cookies();
   cookieStore.delete(COOKIE_NAME);
+  cookieStore.delete("accessToken");
+  cookieStore.delete("role");
+  cookieStore.delete("user");
 }
 
 /**

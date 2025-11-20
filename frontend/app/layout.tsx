@@ -7,6 +7,7 @@ import Providers from "@/components/Providers";
 import Navbar from "@/components/general/Navbar";
 
 import SessionRestore from "@/components/SessionRestore";
+import SessionSync from "@/components/SessionSync";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -29,7 +30,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <Providers>
-          <SessionRestore />
+          {/* <SessionRestore /> */}
+          <SessionSync />
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

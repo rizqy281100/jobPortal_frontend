@@ -15,28 +15,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAppDispatch } from "@/store/hooks";
+
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/authSlice";
 import { toast } from "sonner";
 import { api } from "@/lib/axios";
-import { useAppSelector } from "@/store/hooks";
 
 /* ==== Types ==== */
 export type NavItem = { href: string; label: string };
-type UserSession = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-} | null;
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
-const username = process.env.NEXT_PUBLIC_USERNAME_BASIC;
-const pass = process.env.NEXT_PUBLIC_PASSWORD_BASIC;
-const basicHeader =
-  username && pass
-    ? `Basic ${Buffer.from(`${username}:${pass}`).toString("base64")}`
-    : undefined;
 /* ==== Defaults ==== */
 const recruiterNavItems: NavItem[] = [
   { href: "/", label: "Home" },
@@ -44,6 +31,7 @@ const recruiterNavItems: NavItem[] = [
   { href: "/about", label: "About" },
   { href: "/insights", label: "Insights" },
 ];
+
 const defaultNavItems: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/jobs", label: "Jobs" },
@@ -58,6 +46,7 @@ function NavLink({
 }: React.PropsWithChildren<{ href: string }>) {
   const pathname = usePathname();
   const active = pathname === href || pathname?.startsWith(href + "/");
+
   return (
     <Button
       asChild
@@ -76,15 +65,18 @@ function NavLink({
 export default function Navbar({
   navItems = defaultNavItems,
   brand = { name: "JobPortal", href: "/" },
-  session,
 }: {
   navItems?: NavItem[];
   brand?: { name: string; href: string };
-  session?: UserSession;
 }) {
-  let items = navItems || defaultNavItems;
+  // 🔥 FIX: Ambil session dari REDUX, bukan props
+  const { user: session, isAuthenticated } = useAppSelector(
+    (state) => state.auth
+  );
 
-  // 🔁 Ganti secara dinamis tergantung role
+  let items = navItems;
+
+  // 🔥 FIX: role recruiter
   if (session?.role === "recruiter") {
     items = [
       { href: "/dashboard-recruiters", label: "Dashboard" },
@@ -95,7 +87,7 @@ export default function Navbar({
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      {/* -------------------- Desktop & Tablet (≥md) -------------------- */}
+      {/* -------------------- Desktop -------------------- */}
       <div className="container mx-auto hidden h-20 grid-cols-3 items-center px-4 md:grid">
         {/* Left: Logo */}
         <div className="flex items-center">
@@ -115,16 +107,14 @@ export default function Navbar({
 
         {/* Right: Actions */}
         <div className="flex items-center justify-end gap-2">
-          {session ? (
+          {isAuthenticated && session ? (
             <>
-              {/* Dropdown Akun */}
               <AccountDropdown
                 name={session.name}
                 email={session.email}
                 role={session.role}
               />
 
-              {/* 🔽 Tombol Login Perusahaan muncul di sebelah dropdown */}
               {session.role !== "recruiter" && (
                 <Button asChild size="sm" variant="outline">
                   <Link href="/perusahaan/login">Recruiter</Link>
@@ -153,16 +143,14 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* -------------------- Mobile (<md) -------------------- */}
+      {/* -------------------- Mobile -------------------- */}
       <div className="container mx-auto flex h-14 items-center justify-between px-3 md:hidden">
-        {/* Left: Logo */}
         <Link href={brand.href} className="font-bold text-lg">
           Job<span className="text-primary">Portal</span>
         </Link>
 
-        {/* Right */}
         <div className="flex items-center gap-1">
-          {session ? (
+          {isAuthenticated && session ? (
             <>
               <AccountDropdown
                 name={session.name}
@@ -170,6 +158,7 @@ export default function Navbar({
                 role={session.role}
                 compact
               />
+
               {session.role !== "recruiter" && (
                 <Button asChild size="sm" variant="outline">
                   <Link href="/perusahaan/login">Recruiter</Link>
@@ -217,27 +206,20 @@ function AccountDropdown({
     e.preventDefault();
 
     if (isLoggingOut) return;
-
     setIsLoggingOut(true);
 
     try {
-      // Call logout API untuk hapus cookie
       const response = await api.delete(`users/logout`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
 
-      if (response.code !== 200) {
-        throw new Error("Logout failed");
-      }
+      if (response.code !== 200) throw new Error("Logout failed");
 
-      // Clear Redux state
       dispatch(logout());
 
       toast.success("Logout berhasil");
-
-      // Redirect ke login
       router.push("/");
       router.refresh();
     } catch (error) {
@@ -277,9 +259,9 @@ function AccountDropdown({
             <p className="text-xs text-muted-foreground capitalize">{role}</p>
           </div>
         </DropdownMenuLabel>
+
         <DropdownMenuSeparator />
 
-        {/* Dashboard Link */}
         {role !== "recruiter" ? (
           <DropdownMenuItem asChild>
             <Link
@@ -304,7 +286,6 @@ function AccountDropdown({
 
         <DropdownMenuSeparator />
 
-        {/* Logout */}
         <DropdownMenuItem
           onClick={handleLogout}
           disabled={isLoggingOut}

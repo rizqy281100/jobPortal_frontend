@@ -19,9 +19,13 @@ import {
 import { MoreHorizontal, CheckCircle, XCircle, Users } from "lucide-react";
 import AppliedJobsClient from "./AppliedJobsClient";
 import { useAppSelector } from "@/store/hooks";
+import { useSearchParams } from "next/navigation";
 
 export default function DashboardRecruiterPage() {
   const { user } = useAppSelector((state) => state.auth);
+
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab") ?? "overview";
 
   // User sudah pasti ada karena sudah diproteksi di layout
   const userName = user?.name || "User";
@@ -68,7 +72,7 @@ export default function DashboardRecruiterPage() {
 
       {/* --- Tabs Container --- */}
       <Tabs
-        defaultValue="overview"
+        defaultValue={tab ?? "overview"}
         orientation="vertical"
         className="flex w-full space-x-8"
       >
@@ -81,7 +85,7 @@ export default function DashboardRecruiterPage() {
             Overview
           </TabsTrigger>
           <TabsTrigger
-            value="applied"
+            value="post"
             className="w-full justify-start px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition"
           >
             Post a Job
@@ -205,7 +209,7 @@ export default function DashboardRecruiterPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="applied">
+          <TabsContent value="post">
             <AppliedJobsClient />
           </TabsContent>
 
