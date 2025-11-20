@@ -81,7 +81,6 @@ export default function Navbar({
     items = [
       { href: "/dashboard-recruiters", label: "Dashboard" },
       { href: "/jobs", label: "My Jobs" },
-      { href: "/post", label: "Post Job" },
     ];
   }
 
@@ -123,7 +122,7 @@ export default function Navbar({
 
               {session.role === "recruiter" && (
                 <Button asChild size="sm" variant="outline">
-                  <Link href="/post">Post A Job</Link>
+                  <Link href="/dashboard-recruiters?tab=post">Post A Job</Link>
                 </Button>
               )}
 

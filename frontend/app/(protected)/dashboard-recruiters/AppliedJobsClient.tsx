@@ -50,7 +50,7 @@ function fmtDate(iso: string) {
 export default function PostJobForm() {
   const [deadline, setDeadline] = useState("");
   const [currency, setCurrency] = useState("148");
-  const [query, setQuery] = useState("UZS"); // ← default UZS
+  const [query, setQuery] = useState("a"); // ← default UZS
   const [currencyOptions, setCurrencyOptions] = useState<Option[]>([]);
   const [tags, setTags] = useState([]); // ← dari TagsInput
   const [minSalary, setMinSalary] = useState("");
