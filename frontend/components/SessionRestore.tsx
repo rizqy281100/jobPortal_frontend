@@ -33,13 +33,13 @@ export default function SessionRestore() {
           "/users/refresh-token",
           {},
           {
-            headers: { Authorization: accessToken },
+            headers: { Authorization: basicHeader },
             withCredentials: true, // penting untuk cookie refresh
           }
         );
 
         // Jika server membalas token baru
-        const data = response.data;
+        const data = response?.data;
 
         dispatch(
           loginSuccess({

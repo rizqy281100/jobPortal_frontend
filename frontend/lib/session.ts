@@ -14,10 +14,11 @@ const COOKIE_OPTIONS = {
  * Create session dengan menyimpan refreshToken di httpOnly cookie
  * PENTING: Hanya simpan refreshToken, JANGAN simpan accessToken di cookie
  */
-export async function createSession(refreshToken: string) {
+export async function createSession(refreshToken: string, role?: string) {
   const cookieStore = await cookies();
 
   cookieStore.set(COOKIE_NAME, refreshToken, COOKIE_OPTIONS);
+  cookieStore.set("role", role || "none", COOKIE_OPTIONS);
 }
 
 /**

@@ -12,9 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import TagsInput from "@/components/TagsInput";
+import { SearchableSelect } from "@/components/SearchableSelect"; // sesuaikan path-mu
+import type { Option } from "@/components/SearchableSelect";
+import { api } from "@/lib/axios";
 
 type AppliedItem = {
   id: string;
@@ -45,8 +48,62 @@ function fmtDate(iso: string) {
 
 export default function PostJobForm() {
   const [currency, setCurrency] = useState("USD");
-  const [title, setTitle] = useState("");
+  const [query, setQuery] = useState("UZS"); // ← default UZS
+  const [currencyOptions, setCurrencyOptions] = useState<Option[]>([]);
   const [tags, setTags] = useState([]); // ← dari TagsInput
+  const [minSalary, setMinSalary] = useState("");
+  const [maxSalary, setMaxSalary] = useState("");
+  const [salaryError, setSalaryError] = useState("");
+
+  function validateSalary(min: string, max: string) {
+    const minVal = Number(min);
+    const maxVal = Number(max);
+
+    if (min && minVal < 0) {
+      return "Minimum salary cannot be negative.";
+    }
+    if (max && maxVal < 0) {
+      return "Maximum salary cannot be negative.";
+    }
+    if (min && max && minVal > maxVal) {
+      return "Minimum salary cannot be greater than maximum salary.";
+    }
+
+    return "";
+  }
+
+  async function fetchCurrencies(keyword: string = "UZS") {
+    try {
+      console.log("Keyword:", keyword);
+      const res = await api.get(`/currencies/${keyword}`);
+      const data = await res?.data;
+      console.log("Fetched currencies:", data);
+
+      setCurrencyOptions(
+        data?.map((item: any) => ({
+          label: `${item.name} (${item.code})`,
+          value: item.code,
+        })) ?? []
+      );
+    } catch (err) {
+      console.error("Error loading currencies:", err);
+      setCurrencyOptions([]);
+    }
+  }
+
+  // 🔥 Load default: UZS
+  useEffect(() => {
+    fetchCurrencies("UZS");
+  }, []);
+
+  // 🔥 Debounce on typing
+  useEffect(() => {
+    if (!query) return;
+
+    const timeout = setTimeout(() => fetchCurrencies(query), 300);
+
+    return () => clearTimeout(timeout);
+  }, [query]);
 
   return (
     <form className="space-y-6">
@@ -71,22 +128,47 @@ export default function PostJobForm() {
         <Label>Salary</Label>
         <div className="grid md:grid-cols-3 gap-4 mt-1">
           {/* Min Salary */}
-          <Input name="minSalary" type="number" placeholder="Minimum salary" />
+          <Input
+            name="minSalary"
+            type="number"
+            placeholder="Minimum salary"
+            value={minSalary}
+            onChange={(e) => {
+              const v = e.target.value;
+              setMinSalary(v);
+              setSalaryError(validateSalary(v, maxSalary));
+            }}
+          />
 
           {/* Max Salary */}
-          <Input name="maxSalary" type="number" placeholder="Maximum salary" />
+          <Input
+            name="maxSalary"
+            type="number"
+            placeholder="Maximum salary"
+            value={maxSalary}
+            onChange={(e) => {
+              const v = e.target.value;
+              setMaxSalary(v);
+              setSalaryError(validateSalary(minSalary, v));
+            }}
+          />
 
-          <Select value={currency} onValueChange={setCurrency}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Currency" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="USD">USD</SelectItem>
-              <SelectItem value="IDR">IDR</SelectItem>
-              <SelectItem value="EUR">EUR</SelectItem>
-              <SelectItem value="SGD">SGD</SelectItem>
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            options={currencyOptions}
+            value={currency}
+            onChange={setCurrency}
+            placeholder="Select currency..."
+            onSearch={(text: string) => {
+              fetchCurrencies(text);
+              setQuery(text);
+            }}
+            className="mt-1"
+            onClick={() => fetchCurrencies("UZS")}
+          />
+
+          {salaryError && (
+            <p className="text-red-500 text-sm mt-1">{salaryError}</p>
+          )}
         </div>
 
         <p className="text-sm text-gray-500 mt-1">

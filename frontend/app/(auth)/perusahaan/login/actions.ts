@@ -62,7 +62,7 @@ export async function loginAction(formData: FormData): Promise<LoginResponse> {
     }
 
     // Simpan refreshToken di httpOnly cookie
-    await createSession(refreshToken);
+    await createSession(refreshToken, user.role);
 
     // Return token dan user ke client
     // Client akan menyimpan ini di Redux
