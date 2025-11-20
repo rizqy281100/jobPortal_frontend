@@ -1,5 +1,7 @@
 "use client";
 
+import { api } from "@/lib/axios";
+import { useAppSelector } from "@/store/hooks";
 import * as React from "react";
 
 /* ========================================================================
@@ -7,13 +9,13 @@ import * as React from "react";
    ======================================================================== */
 
 type RecruiterSettings = {
-  companyName: string; // VARCHAR(150)
-  companyWebsite?: string; // VARCHAR(255)
-  contactName?: string; // VARCHAR(100)
-  contactPhone?: string; // VARCHAR(30)
-  companyAddress?: string; // TEXT
-  industry?: string; // VARCHAR(100)
-  description?: string; // TEXT
+  companyName: string;
+  companyWebsite?: string;
+  contactName?: string;
+  contactPhone?: string;
+  companyAddress?: string;
+  industry?: string;
+  description?: string;
 };
 
 /* ========================================================================
@@ -23,7 +25,6 @@ type RecruiterSettings = {
 const LS_KEY_RECRUITER = "recruiterSettings_v1";
 
 function toPhone30(v: string) {
-  // keep only digits, +, space, - and max length 30
   const cleaned = v.replace(/[^\d+\-\s]/g, "");
   return cleaned.slice(0, 30);
 }
@@ -37,48 +38,100 @@ export default function RecruiterSettings() {
     companyName: "",
   });
 
-  /** ===== Load from localStorage on mount ===== */
+  const { accessToken } = useAppSelector((state) => state.auth);
+  // Tambahan: avatar
+  const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
+
+  const userId = "REPLACE_WITH_USER_ID"; // ambil dari session kamu
+  const recruiterId = "REPLACE_WITH_RECRUITER_ID"; // bisa setelah GET profile
+
+  /* =================== LOAD BACKEND DATA =================== */
+  React.useEffect(() => {
+    async function load() {
+      try {
+        const res = await api.get(`/recruiter/${userId}`, {
+          headers: {
+            // Tambahkan header jika perlu, misal Authorization
+            Authorization: accessToken ? `Bearer ${accessToken}` : "",
+            withCredentials: "true",
+          },
+        });
+        const json = await res;
+
+        if (json?.data) {
+          const r = json?.data;
+
+          setSettings({
+            companyName: r.company_name ?? "",
+            companyWebsite: r.company_website ?? "",
+            contactName: r.contact_name ?? "",
+            contactPhone: r.contact_phone ?? "",
+            companyAddress: r.address ?? "",
+            industry: r.industry_id ?? "",
+            description: r.description ?? "",
+          });
+
+          if (r.avatar_url) {
+            setAvatarPreview(r.avatar_url);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load recruiter", e);
+      }
+    }
+
+    load();
+  }, []);
+
+  /* =================== LOCAL STORAGE SYNC =================== */
   React.useEffect(() => {
     try {
       const raw = localStorage.getItem(LS_KEY_RECRUITER);
       if (raw) {
-        const obj = JSON.parse(raw) as RecruiterSettings;
-        setSettings({
-          companyName: obj.companyName ?? "",
-          companyWebsite: obj.companyWebsite ?? "",
-          contactName: obj.contactName ?? "",
-          contactPhone: obj.contactPhone ?? "",
-          companyAddress: obj.companyAddress ?? "",
-          industry: obj.industry ?? "",
-          description: obj.description ?? "",
-        });
+        const obj = JSON.parse(raw);
+        setSettings((s) => ({ ...s, ...obj }));
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, []);
 
-  /** ===== Persist helper ===== */
-  const persist = React.useCallback(() => {
+  React.useEffect(() => {
     localStorage.setItem(LS_KEY_RECRUITER, JSON.stringify(settings));
   }, [settings]);
 
-  // Auto-persist on changes
-  React.useEffect(() => {
-    persist();
-  }, [persist]);
+  /* =================== SAVE TO BACKEND =================== */
+  const onSave = async () => {
+    const formData = new FormData();
 
-  /** ===== Manual Save ===== */
-  const onSave = () => {
-    persist();
-    alert(
-      "Recruiter settings saved locally. Integrate your backend API to save this data to the server."
-    );
+    formData.append("company_name", settings.companyName);
+    formData.append("company_website", settings.companyWebsite ?? "");
+    formData.append("contact_name", settings.contactName ?? "");
+    formData.append("contact_phone", settings.contactPhone ?? "");
+    formData.append("address", settings.companyAddress ?? "");
+    formData.append("industry_id", settings.industry ?? "");
+    formData.append("description", settings.description ?? "");
+
+    if (avatarFile) {
+      formData.append("avatar", avatarFile);
+    }
+
+    const res = await fetch(`/api/recruiter/${recruiterId}`, {
+      method: "PUT",
+      body: formData,
+      credentials: "include",
+    });
+
+    const json = await res.json();
+    if (json.err) {
+      alert("Failed to update: " + json.message);
+    } else {
+      alert("Profile updated successfully.");
+    }
   };
 
-  /* -------------------------------------------------------------------- */
-  /* View                                                                 */
-  /* -------------------------------------------------------------------- */
+  /* =======================================================================
+     VIEW
+  ======================================================================== */
 
   return (
     <div className="space-y-8">
@@ -93,7 +146,30 @@ export default function RecruiterSettings() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)]">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            {/* 1. Company name (VARCHAR 150) */}
+            {/* Avatar Upload */}
+            <Field label="Avatar" full>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) {
+                    setAvatarFile(f);
+                    setAvatarPreview(URL.createObjectURL(f));
+                  }
+                }}
+              />
+
+              {avatarPreview && (
+                <img
+                  src={avatarPreview}
+                  className="h-20 rounded mt-2 border"
+                  alt="Avatar Preview"
+                />
+              )}
+            </Field>
+
+            {/* 1. Company name */}
             <Field label="Company Name" required>
               <input
                 className="w-full rounded-lg border px-3 py-2"
@@ -109,7 +185,7 @@ export default function RecruiterSettings() {
               />
             </Field>
 
-            {/* 2. Company website (VARCHAR 255) */}
+            {/* 2. Company website */}
             <Field label="Company Website">
               <input
                 className="w-full rounded-lg border px-3 py-2"
@@ -125,7 +201,7 @@ export default function RecruiterSettings() {
               />
             </Field>
 
-            {/* 3. Contact name (VARCHAR 100) */}
+            {/* 3. Contact name */}
             <Field label="Contact Name">
               <input
                 className="w-full rounded-lg border px-3 py-2"
@@ -141,7 +217,7 @@ export default function RecruiterSettings() {
               />
             </Field>
 
-            {/* 4. Contact phone (VARCHAR 30) */}
+            {/* 4. Contact phone */}
             <Field label="Contact Phone">
               <input
                 className="w-full rounded-lg border px-3 py-2"
@@ -157,7 +233,7 @@ export default function RecruiterSettings() {
               />
             </Field>
 
-            {/* 5. Company address (TEXT) */}
+            {/* 5. Company address */}
             <Field label="Company Address" full>
               <textarea
                 rows={3}
@@ -173,11 +249,11 @@ export default function RecruiterSettings() {
               />
             </Field>
 
-            {/* 6. Industry (VARCHAR 100) */}
+            {/* 6. Industry */}
             <Field label="Industry">
               <input
                 className="w-full rounded-lg border px-3 py-2"
-                placeholder="e.g. Information Technology, FMCG, Banking..."
+                placeholder="e.g. Information Technology..."
                 maxLength={100}
                 value={settings.industry ?? ""}
                 onChange={(e) =>
@@ -189,12 +265,12 @@ export default function RecruiterSettings() {
               />
             </Field>
 
-            {/* 7. Description (TEXT) */}
+            {/* 7. Description */}
             <Field label="Company Description" full>
               <textarea
                 rows={4}
                 className="w-full rounded-lg border px-3 py-2"
-                placeholder="Describe your company, culture, and work environment..."
+                placeholder="Describe your company..."
                 value={settings.description ?? ""}
                 onChange={(e) =>
                   setSettings((s) => ({
@@ -221,7 +297,7 @@ export default function RecruiterSettings() {
 }
 
 /* ========================================================================
-   Small reusable form bits
+   Field component
    ======================================================================== */
 
 function Field({
