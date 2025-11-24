@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
 import { api } from "@/lib/axios";
 import { useAppSelector } from "@/store/hooks";
 import * as React from "react";
@@ -38,23 +39,24 @@ export default function RecruiterSettings() {
     companyName: "",
   });
 
-  const { accessToken } = useAppSelector((state) => state.auth);
+  const { accessToken, user } = useAppSelector((state) => state.auth);
   // Tambahan: avatar
   const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
+  const [avatarPreviewFromBackend, setAvatarPreviewFromBackend] =
+    React.useState<string | null>(null);
 
-  const userId = "REPLACE_WITH_USER_ID"; // ambil dari session kamu
-  const recruiterId = "REPLACE_WITH_RECRUITER_ID"; // bisa setelah GET profile
+  const userId = user?.id; // ambil dari session kamu
+  const recruiterId = user?.id; // bisa setelah GET profile
 
   /* =================== LOAD BACKEND DATA =================== */
   React.useEffect(() => {
     async function load() {
       try {
-        const res = await api.get(`/recruiter/${userId}`, {
+        const res = await api.get(`/users/${userId}/recruiters`, {
           headers: {
             // Tambahkan header jika perlu, misal Authorization
             Authorization: accessToken ? `Bearer ${accessToken}` : "",
-            withCredentials: "true",
           },
         });
         const json = await res;
@@ -68,12 +70,12 @@ export default function RecruiterSettings() {
             contactName: r.contact_name ?? "",
             contactPhone: r.contact_phone ?? "",
             companyAddress: r.address ?? "",
-            industry: r.industry_id ?? "",
+            industry: r.industry ?? "",
             description: r.description ?? "",
           });
 
           if (r.avatar_url) {
-            setAvatarPreview(r.avatar_url);
+            setAvatarPreviewFromBackend(r.avatar_url);
           }
         }
       } catch (e) {
@@ -115,14 +117,15 @@ export default function RecruiterSettings() {
       formData.append("avatar", avatarFile);
     }
 
-    const res = await fetch(`/api/recruiter/${recruiterId}`, {
-      method: "PUT",
-      body: formData,
-      credentials: "include",
+    const res = await api.put(`/users/recruiters`, formData as any, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: accessToken ? `Bearer ${accessToken}` : "",
+      },
     });
 
-    const json = await res.json();
-    if (json.err) {
+    const json = await res;
+    if (json?.code !== 200) {
       alert("Failed to update: " + json.message);
     } else {
       alert("Profile updated successfully.");
@@ -144,37 +147,46 @@ export default function RecruiterSettings() {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px,1fr]">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             {/* Avatar Upload */}
             <Field label="Avatar" full>
-              <input
+              <div className="h-[180px] w-[180px] rounded-full bg-muted/60 ring-1 ring-border overflow-hidden grid place-items-center text-muted-foreground">
+                {avatarPreviewFromBackend || avatarPreview ? (
+                  <img
+                    src={
+                      avatarPreviewFromBackend
+                        ? `http://localhost:5000${avatarPreviewFromBackend}`
+                        : avatarPreview
+                    }
+                    alt="Avatar Preview"
+                  />
+                ) : (
+                  <span className="text-base">No Photo</span>
+                )}
+              </div>
+              <Input
                 type="file"
                 accept="image/*"
+                name="avatar"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) {
                     setAvatarFile(f);
                     setAvatarPreview(URL.createObjectURL(f));
+                    setAvatarPreviewFromBackend(null);
                   }
                 }}
               />
-
-              {avatarPreview && (
-                <img
-                  src={avatarPreview}
-                  className="h-20 rounded mt-2 border"
-                  alt="Avatar Preview"
-                />
-              )}
             </Field>
 
             {/* 1. Company name */}
             <Field label="Company Name" required>
-              <input
+              <Input
                 className="w-full rounded-lg border px-3 py-2"
                 placeholder="Enter your company name..."
                 maxLength={150}
+                name="company-name"
                 value={settings.companyName}
                 onChange={(e) =>
                   setSettings((s) => ({
@@ -187,10 +199,11 @@ export default function RecruiterSettings() {
 
             {/* 2. Company website */}
             <Field label="Company Website">
-              <input
+              <Input
                 className="w-full rounded-lg border px-3 py-2"
                 placeholder="https://example.com"
                 maxLength={255}
+                name="company_website"
                 value={settings.companyWebsite ?? ""}
                 onChange={(e) =>
                   setSettings((s) => ({
@@ -203,11 +216,12 @@ export default function RecruiterSettings() {
 
             {/* 3. Contact name */}
             <Field label="Contact Name">
-              <input
+              <Input
                 className="w-full rounded-lg border px-3 py-2"
                 placeholder="Name of HR or recruiter..."
                 maxLength={100}
                 value={settings.contactName ?? ""}
+                name="contact_name"
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
@@ -219,10 +233,11 @@ export default function RecruiterSettings() {
 
             {/* 4. Contact phone */}
             <Field label="Contact Phone">
-              <input
+              <Input
                 className="w-full rounded-lg border px-3 py-2"
                 placeholder="+62 812 3456 7890"
                 maxLength={30}
+                name="contact_phone"
                 value={settings.contactPhone ?? ""}
                 onChange={(e) =>
                   setSettings((s) => ({
@@ -240,6 +255,7 @@ export default function RecruiterSettings() {
                 className="w-full rounded-lg border px-3 py-2"
                 placeholder="Enter your full company address..."
                 value={settings.companyAddress ?? ""}
+                name="company_address"
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
@@ -251,11 +267,12 @@ export default function RecruiterSettings() {
 
             {/* 6. Industry */}
             <Field label="Industry">
-              <input
+              <Input
                 className="w-full rounded-lg border px-3 py-2"
                 placeholder="e.g. Information Technology..."
                 maxLength={100}
                 value={settings.industry ?? ""}
+                name="industry"
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
@@ -272,6 +289,7 @@ export default function RecruiterSettings() {
                 className="w-full rounded-lg border px-3 py-2"
                 placeholder="Describe your company..."
                 value={settings.description ?? ""}
+                name="company_description"
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,

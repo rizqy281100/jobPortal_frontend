@@ -96,7 +96,7 @@ export default function PostJobForm() {
 
   // 🔥 Load default: UZS
   useEffect(() => {
-    fetchCurrencies("");
+    fetchCurrencies();
   }, []);
 
   // 🔥 Debounce on typing
