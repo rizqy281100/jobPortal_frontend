@@ -26,6 +26,8 @@ import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import Skills from "@/components/Skills";
+import SkillsSelector from "@/components/Skills";
 
 /* ========================================================================
    Types
@@ -47,8 +49,8 @@ type ResumeItem = {
   title: string;
   fileName: string;
   size: number;
-  url: string; // blob/object URL
-  primary?: boolean;
+  resume_url: string; // blob/object URL
+  is_default?: boolean;
   uploadedAt: string;
 };
 type PortfolioItem = {
@@ -110,7 +112,7 @@ type Profile = {
    ======================================================================== */
 const LS_KEY = "userSettings_v1";
 const SKILLS_BANK_KEY = "skillsBank_v1";
-
+const UPLOAD_LOCATION = process.env.NEXT_PUBLIC_UPLOAD;
 const RESUME_LIMIT = 3;
 const PORTFOLIO_LIMIT = 10;
 const CV_MAX_MB = 5;
@@ -185,14 +187,6 @@ function saveSkillsBank(list: string[]) {
   localStorage.setItem(SKILLS_BANK_KEY, JSON.stringify(list));
 }
 
-const setPrimaryResume = (id: string) =>
-  setResumes((r) => r.map((x) => ({ ...x, primary: x.id === id })));
-const removeResume = (id: string) =>
-  setResumes((r) => {
-    const next = r.filter((x) => x.id !== id);
-    if (!next.some((x) => x.primary) && next[0]) next[0].primary = true;
-    return [...next];
-  });
 /* ========================================================================
    Main Component
    ======================================================================== */
@@ -210,11 +204,14 @@ export default function UserSettingsClient() {
   const [work, setWork] = React.useState<WorkItem[]>([]);
   const [edu, setEdu] = React.useState<EduItem[]>([]);
   const [certs, setCerts] = React.useState<CertItem[]>([]);
+  const [saving, setSaving] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   const { accessToken, user } = useAppSelector((state) => state.auth);
   React.useEffect(() => {
     const fetchMe = async () => {
       try {
+        setLoading(true);
         const res = await api.get("/users/workers/me", {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -249,15 +246,20 @@ export default function UserSettingsClient() {
         setAvatarPreviewFromBackend(data.avatar_url ?? null);
         // kalau backend punya data resume, portfolio, dll → masukkan di sini
         setResumes(data.resumes ?? []);
+        setPortfolios(data.portfolios ?? []);
+        setSkillsSel(data.worker_skills ?? []);
         // setWork(data.work_history ?? []);
         // dst...
       } catch (err) {
         console.error("Failed to fetch /users/workers/me", err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchMe();
   }, []);
+
   const onSave = async () => {
     try {
       const formData = new FormData();
@@ -303,6 +305,7 @@ export default function UserSettingsClient() {
       toast.error(err?.response?.data?.message || "Failed to update profile");
     }
   };
+  // add resume
   const addResume = async (file: File, title: string, isDefault: boolean) => {
     try {
       // VALIDATION
@@ -349,24 +352,127 @@ export default function UserSettingsClient() {
         title: data.title,
         fileName: file.name,
         size: file.size,
-        url: data.resume_url, // FULL URL: backend harus kirim atau frontend prefix sendiri
-        primary: data.is_default, // TRUE/FALSE
+        resume_url: data.resume_url, // FULL URL: backend harus kirim atau frontend prefix sendiri
+        is_default: data.is_default, // TRUE/FALSE
         uploadedAt: data.created_at,
       };
 
       // ADD TO STATE
-      setResumes((r) => [item, ...r]);
+      setResumes((r) => [...r, item]);
+      if (item.is_default) {
+        setResumes((prev) =>
+          prev.map((x) => ({
+            ...x,
+            is_default: x.id === item.id,
+          }))
+        );
+      }
+      toast.success("Resume added successfully.");
     } catch (err: any) {
       console.error(err);
-      alert(err?.response?.data?.message ?? "Failed to upload resume");
+      toast.error("Failed to Upload Resume.");
+      // alert(err?.response?.data?.message ?? "Failed to upload resume");
     }
   };
 
+  const removeResume = async (id: string) => {
+    try {
+      setSaving(true);
+
+      // 1. Hapus di backend
+      await api.delete(`/workers/resumes/${id}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      // 2. Update local state jika berhasil
+      setResumes((prev) => {
+        const next = prev.filter((x) => x.id !== id);
+
+        // kalau tidak ada primary, jadikan resume pertama jadi primary
+        if (!next.some((x) => x.is_default) && next[0]) {
+          next[0] = { ...next[0], is_default: true };
+          setPrimaryResume(next[0].id);
+        }
+
+        return next;
+      });
+      toast.success("Resume removed successfully.");
+    } catch (err) {
+      toast.error("Failed to delete Resume.");
+      console.error("Failed to delete resume:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const setPrimaryResume = async (id: string) => {
+    try {
+      setSaving(true);
+
+      // ambil data resume yang mau dijadikan primary
+      const target = resumes.find((r) => r.id === id);
+
+      if (!target) return;
+
+      // 1. Call PUT ke server
+      await api.put(
+        `/workers/resumes/${id}`,
+        {
+          title: target.title,
+          resume_url: target.resume_url,
+          is_default: true,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      // 2. Update state lokal setelah sukses
+      setResumes((prev) =>
+        prev.map((x) => ({
+          ...x,
+          is_default: x.id === id,
+        }))
+      );
+
+      toast.success("Resume " + target.title + " set as Primary.");
+    } catch (err) {
+      toast.success("Failed to set primary resume");
+      console.error("Failed to set primary resume:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addPortfolio = () =>
+    setPortfolios((p) => {
+      if (p.length >= PORTFOLIO_LIMIT) {
+        alert(`Max ${PORTFOLIO_LIMIT} portfolios`);
+        return p;
+      }
+      return [{ id: uid("pf_"), title: "" }, ...p];
+    });
+  const updatePortfolio = (id: string, patch: Partial<PortfolioItem>) =>
+    setPortfolios((p) => p.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+  const removePortfolio = (id: string) =>
+    setPortfolios((p) => p.filter((x) => x.id !== id));
   /* -------------------------------------------------------------------- */
   /* View                                                                 */
   /* -------------------------------------------------------------------- */
   return (
     <div className="space-y-8">
+      {loading && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[999] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
+            <p className="text-white text-sm font-medium">Loading...</p>
+          </div>
+        </div>
+      )}
       {/* =================== SECTION 1: PERSONAL INFO =================== */}
       <section className="rounded-[20px] border bg-card/80 p-5 sm:p-6">
         <header className="pb-2 border-b mb-4">
@@ -664,35 +770,34 @@ export default function UserSettingsClient() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="truncate font-medium">{cv.title}</p>
-                    {cv.primary && (
+                    {cv.is_default && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                         <Star className="h-3 w-3" /> Primary
                       </span>
                     )}
                   </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {cv.fileName} · {fmtSize(cv.size)}
-                  </p>
                 </div>
 
                 <div className="mt-2 flex flex-wrap gap-2 md:mt-0">
                   <a
-                    href={cv.url}
+                    href={UPLOAD_LOCATION + cv.resume_url}
                     target="_blank"
                     className="rounded-lg border px-3 py-1.5 text-sm hover:bg-accent"
                   >
                     Preview
                   </a>
                   <button
-                    // onClick={() => setPrimaryResume(cv.id)}
+                    onClick={() => setPrimaryResume(cv.id)}
                     className={`rounded-lg border px-3 py-1.5 text-sm ${
-                      cv.primary ? "bg-primary text-white" : "hover:bg-accent"
+                      cv.is_default
+                        ? "bg-primary text-white"
+                        : "hover:bg-accent"
                     }`}
                   >
-                    {cv.primary ? "Primary" : "Set Primary"}
+                    {cv.is_default ? "Primary" : "Set Primary"}
                   </button>
                   <button
-                    // onClick={() => removeResume(cv.id)}
+                    onClick={() => removeResume(cv.id)}
                     className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                   >
                     <Trash2 className="h-4 w-4" /> Remove
@@ -708,114 +813,8 @@ export default function UserSettingsClient() {
           </div>
         </div>
 
-        {/* Portfolio */}
-        <div className="mt-8 space-y-3 rounded-xl border p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h4 className="text-lg font-semibold">Portfolio (optional)</h4>
-            <button
-              // onClick={addPortfolio}
-              className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-accent"
-            >
-              <Plus className="h-4 w-4" /> Add
-            </button>
-          </div>
-
-          {portfolios.map((pf) => (
-            <div key={pf.id} className="rounded-xl border p-3 space-y-2">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <LabeledInput
-                  label="Title"
-                  required
-                  value={pf.title}
-                  // onChange={(v) => updatePortfolio(pf.id, { title: v })}
-                  placeholder="Project title..."
-                />
-                <LabeledInput
-                  label="Description (optional)"
-                  value={pf.description ?? ""}
-                  // onChange={(v) => updatePortfolio(pf.id, { description: v })}
-                  placeholder="Short description..."
-                />
-                <LabeledInput
-                  label="Portfolio Link"
-                  required
-                  value={pf.link ?? ""}
-                  // onChange={(v) => updatePortfolio(pf.id, { link: v })}
-                  placeholder="Portfolio link..."
-                />
-              </div>
-              <div className="flex justify-end">
-                <button
-                  // onClick={() => removePortfolio(pf.id)}
-                  className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                >
-                  <Trash2 className="h-4 w-4" /> Remove
-                </button>
-              </div>
-            </div>
-          ))}
-
-          {!portfolios.length && (
-            <div className="rounded-xl border p-4 text-sm text-muted-foreground">
-              No portfolio added.
-            </div>
-          )}
-        </div>
-
         {/* Skills */}
-        <div className="mt-8">
-          <h4 className="font-semibold mb-2">Skills (at least 5 skills)</h4>
-          <div className="relative">
-            <input
-              className="w-full rounded-lg border px-3 py-2"
-              placeholder="Search or add your skills..."
-              // value={skillQuery}
-              // onChange={(e) => setSkillQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  // addSkill(skillQuery);
-                }
-              }}
-            />
-            {/* {!!suggestions.length && (
-              <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border bg-card shadow">
-                {suggestions.map((s) => (
-                  <button
-                    key={s}
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-accent"
-                    onClick={() => addSkill(s)}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )} */}
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            {skillsSel.map((s) => (
-              <span
-                key={s}
-                className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm"
-              >
-                {s}
-                <button
-                  className="rounded-full p-0.5 hover:bg-accent"
-                  // onClick={() => removeSkill(s)}
-                  aria-label={`remove ${s}`}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </span>
-            ))}
-            {!skillsSel.length && (
-              <span className="text-sm text-muted-foreground">
-                No skills added.
-              </span>
-            )}
-          </div>
-        </div>
+        <SkillsSelector value={skillsSel} onChange={setSkillsSel} />
 
         <div className="mt-6 flex justify-end">
           <button
@@ -889,49 +888,6 @@ function LabeledInput({
     </div>
   );
 }
-
-/** Styled native select with placeholder & options */
-// function Select({
-//   value,
-//   onChange,
-//   options,
-//   placeholder = "Select…",
-// }: {
-//   value: string;
-//   onChange: (v: string) => void;
-//   options: { label: string; value: string }[];
-//   placeholder?: string;
-// }) {
-//   return (
-//     <div className="relative">
-//       <select
-//         className="w-full appearance-none rounded-lg border px-3 py-2 pr-8"
-//         value={value}
-//         onChange={(e) => onChange(e.target.value)}
-//       >
-//         <option value="">{placeholder}</option>
-//         {options.map((o) => (
-//           <option key={o.value} value={o.value}>
-//             {o.label}
-//           </option>
-//         ))}
-//       </select>
-//       <svg
-//         className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-//         viewBox="0 0 20 20"
-//         fill="currentColor"
-//         aria-hidden="true"
-//       >
-//         <path
-//           fillRule="evenodd"
-//           d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 011.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-//           clipRule="evenodd"
-//         />
-//       </svg>
-//     </div>
-//   );
-// }
-
 /** Upload form for Resume */
 
 function UploadResume({
@@ -962,6 +918,10 @@ function UploadResume({
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
         </label>
+        <span className="text-[10px] float-right mt-2 ">
+          {" "}
+          maximum file size: 5 MB
+        </span>
       </div>
 
       {/* Title */}
