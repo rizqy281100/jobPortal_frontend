@@ -12,6 +12,20 @@ import {
   Building2,
   Pencil,
 } from "lucide-react";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+  SelectContent,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import api from "@/lib/axios"; // sesuaikan path-mu
+import { useRouter } from "next/navigation";
+import { useAppSelector } from "@/store/hooks";
+import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 /* ========================================================================
    Types
@@ -73,14 +87,16 @@ type CertItem = {
 };
 
 type Profile = {
+  id: string;
+  userId?: string;
   name: string;
   email?: string;
   phone?: string;
   dob?: string;
-  gender?: Gender;
+  gender?: string;
   nationality?: string;
-  religion?: Religion;
-  marital?: Marital;
+  religion?: string;
+  marital?: string;
   address?: string;
   summary?: string;
   currentSalary?: string; // "12,2" numeric as string
@@ -97,24 +113,24 @@ const SKILLS_BANK_KEY = "skillsBank_v1";
 
 const RESUME_LIMIT = 3;
 const PORTFOLIO_LIMIT = 10;
-const CV_MAX_MB = 2;
+const CV_MAX_MB = 5;
 const PHOTO_MAX_MB = 1;
 
 const COUNTRIES = [
-  "Uzbekistan",
-  "Kazakhstan",
-  "Kyrgyzstan",
-  "Tajikistan",
-  "Turkmenistan",
-  "Russia",
-  "Turkey",
-  "India",
-  "Indonesia",
-  "Malaysia",
-  "United States",
-  "United Kingdom",
-  "Germany",
-  "France",
+  { id: "1", name: "Uzbekistan" },
+  { id: "2", name: "Kazakhstan" },
+  { id: "3", name: "Kyrgyzstan" },
+  { id: "4", name: "Tajikistan" },
+  { id: "5", name: "Turkmenistan" },
+  { id: "6", name: "Russia" },
+  { id: "7", name: "Turkey" },
+  { id: "8", name: "India" },
+  { id: "9", name: "Indonesia" },
+  { id: "10", name: "Malaysia" },
+  { id: "11", name: "United States" },
+  { id: "12", name: "United Kingdom" },
+  { id: "13", name: "Germany" },
+  { id: "14", name: "France" },
 ];
 
 const UZ_INSTITUTIONS = [
@@ -169,12 +185,24 @@ function saveSkillsBank(list: string[]) {
   localStorage.setItem(SKILLS_BANK_KEY, JSON.stringify(list));
 }
 
+const setPrimaryResume = (id: string) =>
+  setResumes((r) => r.map((x) => ({ ...x, primary: x.id === id })));
+const removeResume = (id: string) =>
+  setResumes((r) => {
+    const next = r.filter((x) => x.id !== id);
+    if (!next.some((x) => x.primary) && next[0]) next[0].primary = true;
+    return [...next];
+  });
 /* ========================================================================
    Main Component
    ======================================================================== */
 export default function UserSettingsClient() {
   /** ===== load & persist ===== */
   const [profile, setProfile] = React.useState<Profile>({ name: "" });
+  const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
+  const [avatarPreviewFromBackend, setAvatarPreviewFromBackend] =
+    React.useState<string | null>(null);
   const [resumes, setResumes] = React.useState<ResumeItem[]>([]);
   const [portfolios, setPortfolios] = React.useState<PortfolioItem[]>([]);
   const [skillsSel, setSkillsSel] = React.useState<string[]>([]);
@@ -183,169 +211,155 @@ export default function UserSettingsClient() {
   const [edu, setEdu] = React.useState<EduItem[]>([]);
   const [certs, setCerts] = React.useState<CertItem[]>([]);
 
+  const { accessToken, user } = useAppSelector((state) => state.auth);
   React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      if (raw) {
-        const obj = JSON.parse(raw);
-        setProfile(obj.profile ?? { name: "" });
-        setResumes(obj.resumes ?? []);
-        setPortfolios(obj.portfolios ?? []);
-        setSkillsSel(obj.skillsSel ?? []);
-        setWork(obj.work ?? []);
-        setEdu(obj.edu ?? []);
-        setCerts(obj.certs ?? []);
+    const fetchMe = async () => {
+      try {
+        const res = await api.get("/users/workers/me", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }); // sesuaikan path-mu
+        const data = res.data?.data;
+        console.log("Fetched /users/workers/me:", data);
+        if (!data) return;
+
+        // mapping JSON backend -> state frontend
+        setProfile({
+          id: data.id ?? "",
+          userId: data.user_id ?? "",
+          name: data.name ?? "",
+          email: data.email ?? "",
+          phone: data.telephone ?? "",
+          dob: data.date_of_birth
+            ? new Date(data.date_of_birth).toISOString().split("T")[0]
+            : "",
+          gender: String(data.gender_id ?? ""),
+          nationality: String(data.nationality_id ?? ""),
+          religion: String(data.religion_id ?? ""),
+          marital: String(data.marriage_status_id ?? ""),
+          address: data.address ?? "",
+          summary: data.profile_summary ?? "",
+          currentSalary: data.current_salary ?? "",
+          expectedSalary: data.expected_salary ?? "",
+          photoUrl: data.avatar_url ?? "",
+          photoName: data.avatar_name ?? "",
+        });
+
+        setAvatarPreviewFromBackend(data.avatar_url ?? null);
+        // kalau backend punya data resume, portfolio, dll → masukkan di sini
+        setResumes(data.resumes ?? []);
+        // setWork(data.work_history ?? []);
+        // dst...
+      } catch (err) {
+        console.error("Failed to fetch /users/workers/me", err);
       }
-      setSkillsBank(getSkillsBank());
-    } catch {}
-  }, []);
-  const persist = React.useCallback(() => {
-    localStorage.setItem(
-      LS_KEY,
-      JSON.stringify({
-        profile,
-        resumes,
-        portfolios,
-        skillsSel,
-        work,
-        edu,
-        certs,
-      })
-    );
-  }, [profile, resumes, portfolios, skillsSel, work, edu, certs]);
-  React.useEffect(() => {
-    persist();
-  }, [persist]);
-
-  /** ===== Profile handlers ===== */
-  const onPhoto = (f?: File) => {
-    if (!f) return;
-    const okType = /image\/(png|jpe?g)/i.test(f.type);
-    const okSize = f.size <= PHOTO_MAX_MB * 1024 * 1024;
-    if (!okType || !okSize) {
-      alert("Photo must be PNG/JPG/JPEG and ≤ 1 MB");
-      return;
-    }
-    const url = URL.createObjectURL(f);
-    setProfile((p) => ({ ...p, photoUrl: url, photoName: f.name }));
-  };
-
-  /** ===== Resume handlers ===== */
-  const addResume = async (file: File, title: string) => {
-    if (!/application\/pdf/i.test(file.type)) return alert("Only PDF allowed");
-    if (file.size > CV_MAX_MB * 1024 * 1024)
-      return alert(`Max size ${CV_MAX_MB}MB`);
-    if (!title.trim()) return alert("Title is required");
-    if (resumes.length >= RESUME_LIMIT)
-      return alert(`Max ${RESUME_LIMIT} resumes`);
-
-    const url = URL.createObjectURL(file);
-    const item: ResumeItem = {
-      id: uid("cv_"),
-      title: title.trim(),
-      fileName: file.name,
-      size: file.size,
-      url,
-      primary: resumes.length === 0, // first becomes primary
-      uploadedAt: new Date().toISOString(),
     };
-    setResumes((r) => [item, ...r]);
-  };
-  const setPrimaryResume = (id: string) =>
-    setResumes((r) => r.map((x) => ({ ...x, primary: x.id === id })));
-  const removeResume = (id: string) =>
-    setResumes((r) => {
-      const next = r.filter((x) => x.id !== id);
-      if (!next.some((x) => x.primary) && next[0]) next[0].primary = true;
-      return [...next];
-    });
 
-  /** ===== Portfolios ===== */
-  const addPortfolio = () =>
-    setPortfolios((p) => {
-      if (p.length >= PORTFOLIO_LIMIT) {
-        alert(`Max ${PORTFOLIO_LIMIT} portfolios`);
-        return p;
+    fetchMe();
+  }, []);
+  const onSave = async () => {
+    try {
+      const formData = new FormData();
+
+      formData.append("name", profile.name ?? "");
+      formData.append("id", profile.id ?? "");
+      formData.append("telephone", profile.phone ?? "");
+      formData.append("date_of_birth", profile.dob ?? "");
+      formData.append("gender_id", profile.gender ?? "");
+      formData.append("nationality_id", profile.nationality ?? "");
+      formData.append("religion_id", profile.religion ?? "");
+      formData.append("marriage_status_id", profile.marital ?? "");
+      formData.append("address", profile.address ?? "");
+      formData.append("profile_summary", profile.summary ?? "");
+      formData.append("current_salary", profile.currentSalary ?? "");
+      formData.append("expected_salary", profile.expectedSalary ?? "");
+
+      // Jika kamu punya upload foto
+      if (avatarFile) {
+        formData.append("avatar", avatarFile ?? "");
       }
-      return [{ id: uid("pf_"), title: "" }, ...p];
-    });
-  const updatePortfolio = (id: string, patch: Partial<PortfolioItem>) =>
-    setPortfolios((p) => p.map((x) => (x.id === id ? { ...x, ...patch } : x)));
-  const removePortfolio = (id: string) =>
-    setPortfolios((p) => p.filter((x) => x.id !== id));
 
-  /** ===== Skills ===== */
-  const [skillQuery, setSkillQuery] = React.useState("");
-  const suggestions = React.useMemo(() => {
-    if (!skillQuery) return [];
-    const q = skillQuery.toLowerCase();
-    return skillsBank
-      .filter((s) => s.toLowerCase().includes(q) && !skillsSel.includes(s))
-      .slice(0, 7);
-  }, [skillQuery, skillsBank, skillsSel]);
-  const addSkill = (s: string) => {
-    const val = s.trim();
-    if (!val) return;
-    if (skillsSel.includes(val)) return;
-    const next = [...skillsSel, val];
-    setSkillsSel(next);
-    const bank = Array.from(new Set([val, ...skillsBank]));
-    setSkillsBank(bank);
-    saveSkillsBank(bank);
-    setSkillQuery("");
+      const res = await api.put("/users/workers/me", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      // local cache update
+      // persist();
+      const json = await res.data;
+      console.log("PUT /users/workers/me response:", json);
+      if (json?.code !== 200) {
+        // alert("Failed to update: " + json.message);
+        toast.error("Failed to update: " + json.message);
+      } else {
+        // alert("Profile updated successfully.");
+        toast.success("Profile updated successfully.");
+      }
+    } catch (err: any) {
+      console.error("PUT /users/workers/me error:", err);
+      toast.error(err?.response?.data?.message || "Failed to update profile");
+    }
   };
-  const removeSkill = (s: string) =>
-    setSkillsSel((list) => list.filter((x) => x !== s));
+  const addResume = async (file: File, title: string, isDefault: boolean) => {
+    try {
+      // VALIDATION
+      if (!/application\/pdf/i.test(file.type))
+        return alert("Only PDF allowed");
 
-  /** ===== Work & Edu ===== */
-  const addWork = () =>
-    setWork((w) => [
-      { id: uid("w_"), company: "", title: "", start: "", current: true },
-      ...w,
-    ]);
-  const updateWork = (id: string, patch: Partial<WorkItem>) =>
-    setWork((w) => w.map((x) => (x.id === id ? { ...x, ...patch } : x)));
-  const removeWork = (id: string) =>
-    setWork((w) => w.filter((x) => x.id !== id));
+      if (file.size > CV_MAX_MB * 1024 * 1024)
+        return alert(`Max size ${CV_MAX_MB}MB`);
 
-  const addEdu = () =>
-    setEdu((e) => [
-      {
-        id: uid("e_"),
-        school: "",
-        degree: "",
-        major: "",
-        start: "",
-        current: true,
-      },
-      ...e,
-    ]);
-  const updateEdu = (id: string, patch: Partial<EduItem>) =>
-    setEdu((e) => e.map((x) => (x.id === id ? { ...x, ...patch } : x)));
-  const removeEdu = (id: string) => setEdu((e) => e.filter((x) => x.id !== id));
+      if (!title.trim()) return alert("Title is required");
 
-  /** ===== Certs ===== */
-  const addCert = () =>
-    setCerts((c) => [
-      { id: uid("c_"), title: "", issuer: "", issueDate: "" },
-      ...c,
-    ]);
-  const updateCert = (id: string, patch: Partial<CertItem>) =>
-    setCerts((c) => c.map((x) => (x.id === id ? { ...x, ...patch } : x)));
-  const removeCert = (id: string) =>
-    setCerts((c) => c.filter((x) => x.id !== id));
-  const onCertFile = (id: string, f?: File) => {
-    if (!f) return;
-    if (!/application\/pdf/i.test(f.type)) return alert("Only PDF allowed");
-    if (f.size > 2 * 1024 * 1024) return alert("Max 2 MB");
-    const url = URL.createObjectURL(f);
-    updateCert(id, { url, fileName: f.name, size: f.size });
-  };
+      if (resumes.length >= RESUME_LIMIT)
+        return alert(`Max ${RESUME_LIMIT} resumes`);
 
-  /** ===== Submit (local-only demo) ===== */
-  const onSave = () => {
-    persist();
-    alert("Saved locally. Integrasikan API backend untuk persist ke server.");
+      // --- BUILD FORM DATA ---
+      const formData = new FormData();
+      formData.append("resume", file); // <== backend must expect 'resume'
+      formData.append("title", title.trim());
+      formData.append("is_default", isDefault ? "true" : "false");
+
+      // --- CALL BACKEND ---
+      const res = await api.post("/workers/resumes", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const data = res.data?.data;
+
+      // EXAMPLE JSON expected from backend:
+      // {
+      //   id: UUID,
+      //   worker_id: UUID,
+      //   resume_url: "/uploads/resumes/xxx.pdf",
+      //   title: "My Resume",
+      //   is_default: false,
+      //   created_at: "...",
+      //   updated_at: "..."
+      // }
+
+      const item: ResumeItem = {
+        id: data.id,
+        title: data.title,
+        fileName: file.name,
+        size: file.size,
+        url: data.resume_url, // FULL URL: backend harus kirim atau frontend prefix sendiri
+        primary: data.is_default, // TRUE/FALSE
+        uploadedAt: data.created_at,
+      };
+
+      // ADD TO STATE
+      setResumes((r) => [item, ...r]);
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.response?.data?.message ?? "Failed to upload resume");
+    }
   };
 
   /* -------------------------------------------------------------------- */
@@ -367,11 +381,15 @@ export default function UserSettingsClient() {
           {/* Avatar */}
           <div className="flex flex-col items-center gap-3">
             <div className="h-[180px] w-[180px] rounded-full bg-muted/60 ring-1 ring-border overflow-hidden grid place-items-center text-muted-foreground">
-              {profile.photoUrl ? (
+              {avatarPreviewFromBackend || avatarPreview ? (
                 <img
-                  src={profile.photoUrl}
-                  alt="Profile"
-                  className="h-full w-full object-cover"
+                  src={
+                    avatarPreviewFromBackend
+                      ? `http://localhost:5000${avatarPreviewFromBackend}`
+                      : avatarPreview
+                  }
+                  alt="Avatar Preview"
+                  className="h-full w-full object-cover object-center"
                 />
               ) : (
                 <span className="text-base">No Photo</span>
@@ -391,7 +409,13 @@ export default function UserSettingsClient() {
                 type="file"
                 accept="image/png,image/jpeg"
                 className="hidden"
-                onChange={(e) => onPhoto(e.target.files?.[0])}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) {
+                    setAvatarFile(f);
+                    setAvatarPreview(URL.createObjectURL(f));
+                  }
+                }}
               />
             </label>
 
@@ -406,7 +430,7 @@ export default function UserSettingsClient() {
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             {/* REQUIRED */}
             <Field label="Your Name" required>
-              <input
+              <Input
                 className="w-full rounded-lg border px-3 py-2"
                 placeholder="Enter your name here..."
                 value={profile.name}
@@ -418,11 +442,12 @@ export default function UserSettingsClient() {
 
             {/* REQUIRED */}
             <Field label="Your Email" required>
-              <input
+              <Input
                 type="email"
-                className="w-full rounded-lg border px-3 py-2"
+                className="w-full rounded-lg border px-3 py-2 disabled:bg-muted/50"
                 placeholder="Enter your email here..."
                 value={profile.email ?? ""}
+                disabled
                 onChange={(e) =>
                   setProfile((p) => ({ ...p, email: e.target.value }))
                 }
@@ -433,7 +458,7 @@ export default function UserSettingsClient() {
             <Field label="Date of Birth" required>
               <div className="relative">
                 <CalIcon className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <input
+                <Input
                   type="date"
                   className="w-full rounded-lg border px-3 py-2 pr-9"
                   value={profile.dob ?? ""}
@@ -446,7 +471,7 @@ export default function UserSettingsClient() {
 
             {/* REQUIRED */}
             <Field label="Phone" required>
-              <input
+              <Input
                 maxLength={20}
                 className="w-full rounded-lg border px-3 py-2"
                 placeholder="Enter your phone number here..."
@@ -461,72 +486,92 @@ export default function UserSettingsClient() {
             <Field label="Gender" required>
               <Select
                 value={profile.gender ?? ""}
-                onChange={(v) =>
-                  setProfile((p) => ({ ...p, gender: v as Gender }))
-                }
-                options={[
-                  { label: "Male", value: "male" },
-                  { label: "Female", value: "female" },
-                  { label: "Others", value: "others" },
-                ]}
-                placeholder="Select your gender"
-              />
+                onValueChange={(v) => setProfile((p) => ({ ...p, gender: v }))}
+              >
+                <SelectTrigger className="w-full rounded-lg border px-3 py-2">
+                  <SelectValue placeholder="Select your gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Male</SelectItem>
+                  <SelectItem value="2">Female</SelectItem>
+                  <SelectItem value="3">Others</SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
 
             {/* REQUIRED */}
             <Field label="Nationality" required>
               <Select
                 value={profile.nationality ?? ""}
-                onChange={(v) => setProfile((p) => ({ ...p, nationality: v }))}
-                options={COUNTRIES.map((c) => ({ label: c, value: c }))}
-                placeholder="Select country"
-              />
+                onValueChange={(v) =>
+                  setProfile((p) => ({ ...p, nationality: v }))
+                }
+              >
+                <SelectTrigger className="w-full rounded-lg border px-3 py-2">
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {COUNTRIES.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
 
             {/* REQUIRED */}
             <Field label="Religion" required>
               <Select
                 value={profile.religion ?? ""}
-                onChange={(v) =>
-                  setProfile((p) => ({ ...p, religion: v as Religion }))
+                onValueChange={(v) =>
+                  setProfile((p) => ({ ...p, religion: v }))
                 }
-                options={[
-                  "islam",
-                  "kristen",
-                  "katolik",
-                  "hindu",
-                  "buddha",
-                  "konghucu",
-                  "judaism",
-                  "others",
-                ].map((r) => ({
-                  label: r.charAt(0).toUpperCase() + r.slice(1),
-                  value: r,
-                }))}
-                placeholder="Select your religion"
-              />
+              >
+                <SelectTrigger className="w-full rounded-lg border px-3 py-2">
+                  <SelectValue placeholder="Select your religion" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {[
+                    { id: "1", name: "Islam" },
+                    { id: "2", name: "Christian" },
+                    { id: "3", name: "Catholic" },
+                    { id: "4", name: "Hindu" },
+                    { id: "5", name: "Buddha" },
+                    { id: "6", name: "Other" },
+                  ].map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.name.charAt(0).toUpperCase() + r.name.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
 
             {/* REQUIRED */}
             <Field label="Status" required>
               <Select
                 value={profile.marital ?? ""}
-                onChange={(v) =>
-                  setProfile((p) => ({ ...p, marital: v as Marital }))
-                }
-                options={[
-                  { label: "Married", value: "married" },
-                  { label: "Not married", value: "not married" },
-                  { label: "Divorced", value: "divorced" },
-                  { label: "Widowed", value: "widowed" },
-                ]}
-                placeholder="Select marriage status"
-              />
+                onValueChange={(v) => setProfile((p) => ({ ...p, marital: v }))}
+              >
+                <SelectTrigger className="w-full rounded-lg border px-3 py-2">
+                  <SelectValue placeholder="Select marriage status" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectItem value="1">Married</SelectItem>
+                  <SelectItem value="2">Not married</SelectItem>
+                  <SelectItem value="3">Divorced</SelectItem>
+                  <SelectItem value="4">Widowed</SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
 
             {/* OPTIONAL */}
             <Field label="Current Salary (optional)">
-              <input
+              <Input
                 inputMode="decimal"
                 className="w-full rounded-lg border px-3 py-2"
                 placeholder="Enter your current salary here..."
@@ -542,7 +587,7 @@ export default function UserSettingsClient() {
 
             {/* OPTIONAL */}
             <Field label="Expected Salary (optional)">
-              <input
+              <Input
                 inputMode="decimal"
                 className="w-full rounded-lg border px-3 py-2"
                 placeholder="Enter your expected salary here..."
@@ -558,7 +603,7 @@ export default function UserSettingsClient() {
 
             {/* REQUIRED */}
             <Field label="Address" required full>
-              <input
+              <Input
                 className="w-full rounded-lg border px-3 py-2"
                 placeholder="Enter your address here..."
                 value={profile.address ?? ""}
@@ -570,7 +615,7 @@ export default function UserSettingsClient() {
 
             {/* REQUIRED */}
             <Field label="Profile Summary" required full>
-              <textarea
+              <Textarea
                 rows={4}
                 className="w-full rounded-lg border px-3 py-2"
                 placeholder="Enter your profile summary here..."
@@ -639,7 +684,7 @@ export default function UserSettingsClient() {
                     Preview
                   </a>
                   <button
-                    onClick={() => setPrimaryResume(cv.id)}
+                    // onClick={() => setPrimaryResume(cv.id)}
                     className={`rounded-lg border px-3 py-1.5 text-sm ${
                       cv.primary ? "bg-primary text-white" : "hover:bg-accent"
                     }`}
@@ -647,7 +692,7 @@ export default function UserSettingsClient() {
                     {cv.primary ? "Primary" : "Set Primary"}
                   </button>
                   <button
-                    onClick={() => removeResume(cv.id)}
+                    // onClick={() => removeResume(cv.id)}
                     className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                   >
                     <Trash2 className="h-4 w-4" /> Remove
@@ -668,7 +713,7 @@ export default function UserSettingsClient() {
           <div className="mb-3 flex items-center justify-between">
             <h4 className="text-lg font-semibold">Portfolio (optional)</h4>
             <button
-              onClick={addPortfolio}
+              // onClick={addPortfolio}
               className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-accent"
             >
               <Plus className="h-4 w-4" /> Add
@@ -682,26 +727,26 @@ export default function UserSettingsClient() {
                   label="Title"
                   required
                   value={pf.title}
-                  onChange={(v) => updatePortfolio(pf.id, { title: v })}
+                  // onChange={(v) => updatePortfolio(pf.id, { title: v })}
                   placeholder="Project title..."
                 />
                 <LabeledInput
                   label="Description (optional)"
                   value={pf.description ?? ""}
-                  onChange={(v) => updatePortfolio(pf.id, { description: v })}
+                  // onChange={(v) => updatePortfolio(pf.id, { description: v })}
                   placeholder="Short description..."
                 />
                 <LabeledInput
                   label="Portfolio Link"
                   required
                   value={pf.link ?? ""}
-                  onChange={(v) => updatePortfolio(pf.id, { link: v })}
+                  // onChange={(v) => updatePortfolio(pf.id, { link: v })}
                   placeholder="Portfolio link..."
                 />
               </div>
               <div className="flex justify-end">
                 <button
-                  onClick={() => removePortfolio(pf.id)}
+                  // onClick={() => removePortfolio(pf.id)}
                   className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <Trash2 className="h-4 w-4" /> Remove
@@ -724,16 +769,16 @@ export default function UserSettingsClient() {
             <input
               className="w-full rounded-lg border px-3 py-2"
               placeholder="Search or add your skills..."
-              value={skillQuery}
-              onChange={(e) => setSkillQuery(e.target.value)}
+              // value={skillQuery}
+              // onChange={(e) => setSkillQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  addSkill(skillQuery);
+                  // addSkill(skillQuery);
                 }
               }}
             />
-            {!!suggestions.length && (
+            {/* {!!suggestions.length && (
               <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border bg-card shadow">
                 {suggestions.map((s) => (
                   <button
@@ -745,7 +790,7 @@ export default function UserSettingsClient() {
                   </button>
                 ))}
               </div>
-            )}
+            )} */}
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">
@@ -757,7 +802,7 @@ export default function UserSettingsClient() {
                 {s}
                 <button
                   className="rounded-full p-0.5 hover:bg-accent"
-                  onClick={() => removeSkill(s)}
+                  // onClick={() => removeSkill(s)}
                   aria-label={`remove ${s}`}
                 >
                   <X className="h-3.5 w-3.5" />
@@ -781,627 +826,6 @@ export default function UserSettingsClient() {
           </button>
         </div>
       </section>
-
-      {/* =================== SECTION: WORK EXPERIENCES =================== */}
-      <section className="rounded-2xl border bg-card/80 p-6 sm:p-8">
-        <header className="mb-6 border-b pb-2">
-          <h3 className="text-xl font-semibold">Work Experiences</h3>
-          <p className="text-sm text-muted-foreground">
-            Share your past experience so recruiters can understand your
-            background.
-          </p>
-        </header>
-
-        {/* Button Add */}
-        <div className="flex justify-between items-center mb-3">
-          <h4 className="text-lg font-medium">Add Work Experience</h4>
-          <button
-            onClick={addWork}
-            className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-accent"
-          >
-            <Plus className="h-4 w-4" /> Add
-          </button>
-        </div>
-
-        {/* Work Form List */}
-        <div className="space-y-4">
-          {work.map((w) => (
-            <div key={w.id} className="rounded-xl border p-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Company */}
-                <LabeledInput
-                  label="Company Name"
-                  required
-                  value={w.company}
-                  placeholder="Enter company name..."
-                  onChange={(v) => updateWork(w.id, { company: v })}
-                />
-
-                {/* Job Title */}
-                <LabeledInput
-                  label="Job Title"
-                  required
-                  value={w.title}
-                  placeholder="e.g. Web Developer"
-                  onChange={(v) => updateWork(w.id, { title: v })}
-                />
-
-                {/* Start Date */}
-                <div>
-                  <label className="mb-1 block text-xs font-medium">
-                    Start Date <span className="text-red-600">*</span>
-                  </label>
-                  <div className="relative">
-                    <CalIcon className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="date"
-                      className="w-full rounded-lg border px-3 py-2 pr-9"
-                      value={w.start}
-                      onChange={(e) =>
-                        updateWork(w.id, { start: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-
-                {/* End Date */}
-                <div>
-                  <label className="mb-1 block text-xs font-medium">
-                    End Date <span className="text-red-600">*</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="date"
-                      disabled={w.current}
-                      className="w-full rounded-lg border px-3 py-2 disabled:opacity-60"
-                      value={w.end ?? ""}
-                      onChange={(e) =>
-                        updateWork(w.id, { end: e.target.value })
-                      }
-                    />
-                    <label className="inline-flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(w.current)}
-                        onChange={(e) =>
-                          updateWork(w.id, { current: e.target.checked })
-                        }
-                      />
-                      Present
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              {/* Job Description */}
-              <div>
-                <label className="mb-1 block text-xs font-medium">
-                  Job Description <span className="text-red-600">*</span>
-                </label>
-                <textarea
-                  rows={4}
-                  className="w-full rounded-lg border px-3 py-2"
-                  placeholder="Describe your responsibilities, achievements, and tech stack..."
-                  value={(w as any).desc ?? ""}
-                  onChange={(e) =>
-                    updateWork(w.id, { desc: e.target.value } as any)
-                  }
-                />
-              </div>
-
-              {/* Remove Button */}
-              <div className="flex justify-end">
-                <button
-                  onClick={() => removeWork(w.id)}
-                  className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                >
-                  <Trash2 className="h-4 w-4" /> Remove
-                </button>
-              </div>
-            </div>
-          ))}
-
-          {/* Empty State */}
-          {!work.length && (
-            <div className="rounded-xl border p-4 text-sm text-muted-foreground">
-              No work experiences added yet.
-            </div>
-          )}
-        </div>
-
-        {/* Save Button */}
-        <div className="mt-6 flex justify-end">
-          <button
-            onClick={onSave}
-            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90"
-          >
-            Save Changes
-          </button>
-        </div>
-      </section>
-
-      {/* =================== SECTION 3: EDUCATION & CERTS =================== */}
-      <section className="rounded-2xl border bg-card/80 p-5 sm:p-6">
-        {/* Educations */}
-        <div className="mb-6">
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Educations</h3>
-            <button
-              onClick={addEdu}
-              className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-accent"
-            >
-              <Plus className="h-4 w-4" />
-              Add
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3">
-            {edu.map((e) => (
-              <div key={e.id} className="rounded-xl border p-3">
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-xs font-medium">
-                      Institution (Uzbekistan)
-                    </label>
-                    <div className="relative">
-                      <Building2 className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <select
-                        className="w-full appearance-none rounded-lg border px-3 py-2 pr-9"
-                        value={e.school}
-                        onChange={(ev) =>
-                          updateEdu(e.id, { school: ev.target.value })
-                        }
-                      >
-                        <option value="">Select institution…</option>
-                        {UZ_INSTITUTIONS.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium">
-                      Degree
-                    </label>
-                    <select
-                      className="w-full rounded-lg border px-3 py-2"
-                      value={e.degree}
-                      onChange={(ev) =>
-                        updateEdu(e.id, { degree: ev.target.value })
-                      }
-                    >
-                      <option value="">Select degree…</option>
-                      {UZ_DEGREES.map((d) => (
-                        <option key={d} value={d}>
-                          {d}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <LabeledInput
-                    label="Major"
-                    value={e.major ?? ""}
-                    onChange={(v) => updateEdu(e.id, { major: v })}
-                    placeholder="e.g. Computer Science"
-                  />
-                  <div className="grid grid-cols-2 gap-3">
-                    <LabeledInput
-                      label="Start date"
-                      type="date"
-                      value={e.start}
-                      onChange={(v) => updateEdu(e.id, { start: v })}
-                    />
-                    <div>
-                      <label className="mb-1 block text-xs font-medium">
-                        End date
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="date"
-                          disabled={e.current}
-                          className="w-full rounded-lg border px-3 py-2 disabled:opacity-60"
-                          value={e.end ?? ""}
-                          onChange={(ev) =>
-                            updateEdu(e.id, { end: ev.target.value })
-                          }
-                        />
-                        <label className="inline-flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(e.current)}
-                            onChange={(ev) =>
-                              updateEdu(e.id, { current: ev.target.checked })
-                            }
-                          />
-                          Current
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-2 flex justify-end">
-                  <button
-                    className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    onClick={() => removeEdu(e.id)}
-                  >
-                    <Trash2 className="h-4 w-4" /> Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-            {!edu.length && (
-              <div className="rounded-xl border p-4 text-sm text-muted-foreground">
-                Belum ada pendidikan.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Certifications */}
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-lg font-semibold">
-              Certifications (PDF, max 2MB)
-            </h3>
-            <button
-              onClick={addCert}
-              className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-accent"
-            >
-              <Plus className="h-4 w-4" />
-              Add
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3">
-            {certs.map((c) => (
-              <div key={c.id} className="rounded-xl border p-3">
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <LabeledInput
-                    label="Title/Name"
-                    required
-                    value={c.title}
-                    onChange={(v) => updateCert(c.id, { title: v })}
-                    placeholder="e.g. AWS Certified Solutions Architect"
-                  />
-                  <LabeledInput
-                    label="Issuer"
-                    required
-                    value={c.issuer}
-                    onChange={(v) => updateCert(c.id, { issuer: v })}
-                    placeholder="e.g. Amazon Web Services"
-                  />
-                  <LabeledInput
-                    label="Issue date"
-                    type="date"
-                    value={c.issueDate ?? ""}
-                    onChange={(v) => updateCert(c.id, { issueDate: v })}
-                  />
-                  <LabeledInput
-                    label="Expiry date"
-                    type="date"
-                    value={c.expiryDate ?? ""}
-                    onChange={(v) => updateCert(c.id, { expiryDate: v })}
-                  />
-                </div>
-
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-                  <div className="text-xs text-muted-foreground">
-                    {c.fileName ? (
-                      <>
-                        {c.fileName} · {c.size ? fmtSize(c.size) : ""}
-                      </>
-                    ) : (
-                      <>No file</>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-accent">
-                      <Upload className="h-4 w-4" />
-                      Upload PDF
-                      <input
-                        type="file"
-                        accept="application/pdf"
-                        className="hidden"
-                        onChange={(e) => onCertFile(c.id, e.target.files?.[0])}
-                      />
-                    </label>
-                    {c.url && (
-                      <a
-                        href={c.url}
-                        target="_blank"
-                        className="rounded-lg border px-3 py-1.5 text-sm hover:bg-accent"
-                      >
-                        Preview
-                      </a>
-                    )}
-                    <button
-                      className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      onClick={() => removeCert(c.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {!certs.length && (
-              <div className="rounded-xl border p-4 text-sm text-muted-foreground">
-                Belum ada sertifikasi.
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-end">
-          <button
-            onClick={onSave}
-            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90"
-          >
-            Save Changes
-          </button>
-        </div>
-      </section>
-
-      {/* =================== SECTION 3: EDUCATION & CERTS =================== */}
-      <section className="rounded-2xl border bg-card/80 p-5 sm:p-6">
-        {/* ===== Educations ===== */}
-        <div className="mb-6">
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Educations</h3>
-            <button
-              onClick={addEdu}
-              className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-accent"
-            >
-              <Plus className="h-4 w-4" />
-              Add
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3">
-            {edu.map((e) => (
-              <div key={e.id} className="rounded-xl border p-4 space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {/* Institution */}
-                  <div>
-                    <label className="mb-1 block text-xs font-medium">
-                      Institution (Uzbekistan)
-                    </label>
-                    <div className="relative">
-                      <Building2 className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <select
-                        className="w-full appearance-none rounded-lg border bg-background px-3 py-2 pr-9 text-sm"
-                        value={e.school}
-                        onChange={(ev) =>
-                          updateEdu(e.id, { school: ev.target.value })
-                        }
-                      >
-                        <option value="">Select institution...</option>
-                        {UZ_INSTITUTIONS.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Degree */}
-                  <div>
-                    <label className="mb-1 block text-xs font-medium">
-                      Degree
-                    </label>
-                    <select
-                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                      value={e.degree}
-                      onChange={(ev) =>
-                        updateEdu(e.id, { degree: ev.target.value })
-                      }
-                    >
-                      <option value="">Select degree...</option>
-                      {UZ_DEGREES.map((d) => (
-                        <option key={d} value={d}>
-                          {d}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Major (full width) */}
-                  <div className="md:col-span-2">
-                    <LabeledInput
-                      label="Major"
-                      value={e.major ?? ""}
-                      onChange={(v) => updateEdu(e.id, { major: v })}
-                      placeholder="e.g. Computer Science"
-                    />
-                  </div>
-
-                  {/* Start / End date */}
-                  <div className="md:col-span-2 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <LabeledInput
-                      label="Start date"
-                      type="date"
-                      value={e.start}
-                      onChange={(v) => updateEdu(e.id, { start: v })}
-                    />
-
-                    <div>
-                      <label className="mb-1 block text-xs font-medium">
-                        End date
-                      </label>
-                      <div className="flex flex-col gap-2">
-                        <input
-                          type="date"
-                          disabled={e.current}
-                          className="w-full rounded-lg border px-3 py-2 disabled:opacity-60"
-                          value={e.end ?? ""}
-                          onChange={(ev) =>
-                            updateEdu(e.id, { end: ev.target.value })
-                          }
-                        />
-                        <label className="inline-flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(e.current)}
-                            onChange={(ev) =>
-                              updateEdu(e.id, { current: ev.target.checked })
-                            }
-                          />
-                          Current
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Remove button */}
-                <div className="flex justify-end">
-                  <button
-                    className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    onClick={() => removeEdu(e.id)}
-                  >
-                    <Trash2 className="h-4 w-4" /> Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {!edu.length && (
-              <div className="rounded-xl border p-4 text-sm text-muted-foreground">
-                Belum ada pendidikan.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ===== Certifications ===== */}
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-lg font-semibold">
-              Certifications (PDF, max 2MB)
-            </h3>
-            <button
-              onClick={addCert}
-              className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-accent"
-            >
-              <Plus className="h-4 w-4" />
-              Add
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3">
-            {certs.map((c) => (
-              <div key={c.id} className="rounded-xl border p-4 space-y-3">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <LabeledInput
-                    label="Title/Name"
-                    required
-                    value={c.title}
-                    onChange={(v) => updateCert(c.id, { title: v })}
-                    placeholder="e.g. AWS Certified Solutions Architect"
-                  />
-                  <LabeledInput
-                    label="Issuer"
-                    required
-                    value={c.issuer}
-                    onChange={(v) => updateCert(c.id, { issuer: v })}
-                    placeholder="e.g. Amazon Web Services"
-                  />
-                  <LabeledInput
-                    label="Issue date"
-                    type="date"
-                    value={c.issueDate ?? ""}
-                    onChange={(v) => updateCert(c.id, { issueDate: v })}
-                  />
-                  <LabeledInput
-                    label="Expiry date"
-                    type="date"
-                    value={c.expiryDate ?? ""}
-                    onChange={(v) => updateCert(c.id, { expiryDate: v })}
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="text-xs text-muted-foreground">
-                    {c.fileName ? (
-                      <>
-                        {c.fileName} · {c.size ? fmtSize(c.size) : ""}
-                      </>
-                    ) : (
-                      <>No file</>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-accent">
-                      <Upload className="h-4 w-4" />
-                      Upload PDF
-                      <input
-                        type="file"
-                        accept="application/pdf"
-                        className="hidden"
-                        onChange={(e) => onCertFile(c.id, e.target.files?.[0])}
-                      />
-                    </label>
-
-                    {c.url && (
-                      <a
-                        href={c.url}
-                        target="_blank"
-                        className="rounded-lg border px-3 py-1.5 text-sm hover:bg-accent"
-                      >
-                        Preview
-                      </a>
-                    )}
-
-                    <button
-                      className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      onClick={() => removeCert(c.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {!certs.length && (
-              <div className="rounded-xl border p-4 text-sm text-muted-foreground">
-                Belum ada sertifikasi.
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-end">
-          <button
-            onClick={onSave}
-            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90"
-          >
-            Save Changes
-          </button>
-        </div>
-      </section>
-
-      {/* Save bar (global) */}
-      <div className="flex items-center justify-end gap-3">
-        <Link
-          href="/profile"
-          className="rounded-lg border px-4 py-2 text-sm hover:bg-accent"
-        >
-          Cancel
-        </Link>
-        <button
-          onClick={onSave}
-          className="rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-        >
-          Save Changes
-        </button>
-      </div>
     </div>
   );
 }
@@ -1467,58 +891,61 @@ function LabeledInput({
 }
 
 /** Styled native select with placeholder & options */
-function Select({
-  value,
-  onChange,
-  options,
-  placeholder = "Select…",
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: { label: string; value: string }[];
-  placeholder?: string;
-}) {
-  return (
-    <div className="relative">
-      <select
-        className="w-full appearance-none rounded-lg border px-3 py-2 pr-8"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">{placeholder}</option>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <svg
-        className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          fillRule="evenodd"
-          d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 011.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-          clipRule="evenodd"
-        />
-      </svg>
-    </div>
-  );
-}
+// function Select({
+//   value,
+//   onChange,
+//   options,
+//   placeholder = "Select…",
+// }: {
+//   value: string;
+//   onChange: (v: string) => void;
+//   options: { label: string; value: string }[];
+//   placeholder?: string;
+// }) {
+//   return (
+//     <div className="relative">
+//       <select
+//         className="w-full appearance-none rounded-lg border px-3 py-2 pr-8"
+//         value={value}
+//         onChange={(e) => onChange(e.target.value)}
+//       >
+//         <option value="">{placeholder}</option>
+//         {options.map((o) => (
+//           <option key={o.value} value={o.value}>
+//             {o.label}
+//           </option>
+//         ))}
+//       </select>
+//       <svg
+//         className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+//         viewBox="0 0 20 20"
+//         fill="currentColor"
+//         aria-hidden="true"
+//       >
+//         <path
+//           fillRule="evenodd"
+//           d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 011.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+//           clipRule="evenodd"
+//         />
+//       </svg>
+//     </div>
+//   );
+// }
 
 /** Upload form for Resume */
+
 function UploadResume({
   onAdd,
 }: {
-  onAdd: (file: File, title: string) => void;
+  onAdd: (file: File, title: string, isDefault: boolean) => void;
 }) {
   const [file, setFile] = React.useState<File | null>(null);
   const [title, setTitle] = React.useState("");
+  const [isDefault, setIsDefault] = React.useState(false);
 
   return (
     <div className="grid grid-cols-1 gap-3 rounded-xl border p-3 md:grid-cols-[1fr,1fr,auto]">
+      {/* File */}
       <div>
         <label className="mb-1 block text-xs font-medium">
           Upload PDF <span className="text-red-600">*</span>
@@ -1536,6 +963,8 @@ function UploadResume({
           />
         </label>
       </div>
+
+      {/* Title */}
       <div>
         <label className="mb-1 block text-xs font-medium">
           Title <span className="text-red-600">*</span>
@@ -1547,14 +976,27 @@ function UploadResume({
           onChange={(e) => setTitle(e.target.value)}
         />
       </div>
-      <div className="flex items-end">
+
+      {/* Toggle is_default */}
+      <div className="flex flex-col justify-end gap-2">
+        <label className="flex items-center gap-2 text-xs font-medium">
+          <Switch checked={isDefault} onCheckedChange={setIsDefault} />
+          Set as default
+        </label>
+
+        {/* Button */}
         <button
-          className="w-full rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 md:w-auto"
+          className="w-full rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
           onClick={() => {
             if (!file) return alert("Choose a PDF file");
-            onAdd(file, title);
+            if (!title.trim()) return alert("Title is required");
+
+            onAdd(file, title, isDefault);
+
+            // reset
             setFile(null);
             setTitle("");
+            setIsDefault(false);
           }}
         >
           Add Resume

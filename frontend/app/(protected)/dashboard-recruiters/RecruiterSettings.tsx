@@ -4,7 +4,9 @@ import { Input } from "@/components/ui/input";
 import { api } from "@/lib/axios";
 import { useAppSelector } from "@/store/hooks";
 import * as React from "react";
-
+import { SearchableSelect } from "@/components/SearchableSelect";
+import { toast } from "sonner";
+import { useState } from "react";
 /* ========================================================================
    Types
    ======================================================================== */
@@ -39,6 +41,9 @@ export default function RecruiterSettings() {
     companyName: "",
   });
 
+  const [industry, setIndustry] = useState("148");
+  const [query, setQuery] = useState("a"); // ← default UZS
+  const [industryOptions, setIndustryOptions] = useState([]);
   const { accessToken, user } = useAppSelector((state) => state.auth);
   // Tambahan: avatar
   const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
@@ -49,6 +54,24 @@ export default function RecruiterSettings() {
   const userId = user?.id; // ambil dari session kamu
   const recruiterId = user?.id; // bisa setelah GET profile
 
+  // async function fetchIndustry(keyword) {
+  //   try {
+  //     console.log("Keyword:", keyword);
+  //     const res = await api.get(`/currencies/${keyword}`);
+  //     const data = await res?.data;
+  //     console.log("Fetched currencies:", data);
+
+  //     setCurrencyOptions(
+  //       data?.map((item: any) => ({
+  //         label: `${item.name} (${item.code})`,
+  //         value: item.id,
+  //       })) ?? []
+  //     );
+  //   } catch (err) {
+  //     console.error("Error loading currencies:", err);
+  //     setCurrencyOptions([]);
+  //   }
+  // }
   /* =================== LOAD BACKEND DATA =================== */
   React.useEffect(() => {
     async function load() {
@@ -129,6 +152,8 @@ export default function RecruiterSettings() {
       alert("Failed to update: " + json.message);
     } else {
       alert("Profile updated successfully.");
+
+      toast.success("Profile updated successfully.");
     }
   };
 
@@ -160,6 +185,7 @@ export default function RecruiterSettings() {
                         : avatarPreview
                     }
                     alt="Avatar Preview"
+                    className="h-full w-full object-cover object-center"
                   />
                 ) : (
                   <span className="text-base">No Photo</span>
@@ -281,6 +307,19 @@ export default function RecruiterSettings() {
                 }
               />
             </Field>
+            {/* <SearchableSelect
+              options={industryOptions}
+              value={industry}
+              onChange={setIndustry}
+              placeholder="Select currency..."
+              onSearch={(text: string) => {
+                fetchCurrencies(text);
+                setQuery(text);
+              }}
+              className="mt-1"
+              onClick={() => fetchCurrencies("UZS")}
+            />
+            <input type="hidden" name="currency" value={currency} /> */}
 
             {/* 7. Description */}
             <Field label="Company Description" full>
