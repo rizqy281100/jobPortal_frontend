@@ -1,17 +1,23 @@
 /* ========================= Types ========================= */
 export type Job = {
   id: string;
+  recruiter_id: string;
+  company_name: string;
+  avatar_url: string;
   title: string;
-  company: string;
-  type: "fulltime" | "parttime" | "contract" | "internship" | "volunteer";
-  policy: "wfh" | "wfo" | "hybrid";
-  exp: "noexp" | "fresh" | "1-2" | "3-5" | "6-10" | "10+";
-  salaryMinM: number;
-  salaryMaxM: number;
-  postedAgo: string;
-  province: string;
-  region: string; // city
-  district: string;
+  description: string;
+  location: string;
+  employment_type: string;
+  experience_level: string;
+  salary_type: string;
+  salary_min: string;
+  salary_max: string;
+  currency: string;
+  status_id: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  policy: string;
   colorKeys?: { type: string; policy: string; exp: string };
 };
 
@@ -51,7 +57,7 @@ const CITY_BANK = [
   { city: "Navoi City", province: "Navoi", districts: ["Zarafshan"] },
 ] as const;
 
-const TYPES: Job["type"][] = [
+const TYPES: Job["employment_type"][] = [
   "fulltime",
   "parttime",
   "contract",
@@ -59,7 +65,14 @@ const TYPES: Job["type"][] = [
   "volunteer",
 ];
 const POLICIES: Job["policy"][] = ["wfh", "wfo", "hybrid"];
-const EXPS: Job["exp"][] = ["noexp", "fresh", "1-2", "3-5", "6-10", "10+"];
+const EXPS: Job["experience_level"][] = [
+  "noexp",
+  "fresh",
+  "1-2",
+  "3-5",
+  "6-10",
+  "10+",
+];
 
 const TITLES = [
   "Software Engineer",
@@ -98,7 +111,7 @@ const COMP_SUFFIX = [
 ];
 
 /* ============ Helper: salary range per experience ============ */
-function salaryByExp(exp: Job["exp"]): [number, number] {
+function salaryByExp(exp: Job["experience_level"]): [number, number] {
   switch (exp) {
     case "noexp":
       return [3, 5]; // UZS ~3–5M

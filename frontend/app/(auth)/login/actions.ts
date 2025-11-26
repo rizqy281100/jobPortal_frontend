@@ -36,7 +36,7 @@ export async function loginAction(formData: FormData): Promise<LoginResponse> {
     if (!email || !password) {
       return {
         success: false,
-        message: "Email dan password harus diisi",
+        message: "Email and password must be filled!",
       };
     }
 
@@ -57,7 +57,7 @@ export async function loginAction(formData: FormData): Promise<LoginResponse> {
     if (!token || !refreshToken) {
       return {
         success: false,
-        message: "Response dari server tidak valid",
+        message: "Invalid server response",
       };
     }
 
