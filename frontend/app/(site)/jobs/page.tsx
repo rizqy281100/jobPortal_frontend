@@ -1,5 +1,6 @@
 import JobsClient from "./parts/JobsClient";
 import { JOBS, type Job } from "./data";
+import { api } from "../../../lib/axios";
 
 // SSG + ISR untuk halaman list (opsional, boleh tetap 60 dtk)
 export const revalidate = 60;
@@ -7,6 +8,10 @@ export const revalidate = 60;
 export default async function JobsEnPage(props: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  const res = await api.get("/job-posts");
+
+  console.log(res);
+
   const { searchParams } = props;
   const { page: rawPage } = await searchParams;
 
@@ -21,10 +26,10 @@ export default async function JobsEnPage(props: {
       <h1 className="mb-4 text-2xl font-bold tracking-tight">Job Posting</h1>
       <JobsClient
         initialJobs={pageJobs}
-        totalJobs={all.length}
-        page={page}
-        totalPages={totalPages}
-        allJobs={all}
+        totalJobs={res?.total}
+        page={res?.page}
+        totalPages={res?.totalPage}
+        allJobs={res?.data}
       />
     </main>
   );

@@ -187,7 +187,7 @@ export default function JobsClient({
   initialJobs,
   totalJobs,
   page: pageProp,
-  totalPages: totalPagesProp,
+  totalPages,
 }: {
   allJobs: Job[];
   initialJobs: Job[];
@@ -250,7 +250,7 @@ export default function JobsClient({
     });
   }, [allJobs, typeSet, polSet, expSet, allUz, selectedDistricts]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredAll.length / pageSize));
+  // const totalPages = Math.max(1, Math.ceil(filteredAll.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const start = (currentPage - 1) * pageSize;
   const pageJobs = filteredAll.slice(start, start + pageSize);
@@ -441,7 +441,7 @@ export default function JobsClient({
 
         {/* Grid: mobile=1, tablet(lg)=2, desktop(xl)=3 */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-          {pageJobs.map((j) => (
+          {allJobs.map((j) => (
             <JobCard key={j.id} job={j} />
           ))}
           {!pageJobs.length && (
@@ -466,20 +466,20 @@ export default function JobsClient({
 }
 
 function JobCard({ job }: { job: Job }) {
-  const typeC = COLOR[job.type];
-  const polC = COLOR[job.policy];
-  const expC = COLOR[job.exp];
+  // const typeC = COLOR[job.employment_type];
+  // const polC = COLOR[job.policy];
+  // const expC = COLOR[job.experience_level];
   const [saved, setSaved] = React.useState(false);
   const LS_KEY = "savedJobs";
 
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      const arr: any[] = raw ? JSON.parse(raw) : [];
-      setSaved(arr.some((x) => x.id === job.id));
-    } catch {}
-  }, [job.id]);
+  // React.useEffect(() => {
+  //   if (typeof window === "undefined") return;
+  //   try {
+  //     const raw = localStorage.getItem(LS_KEY);
+  //     const arr: any[] = raw ? JSON.parse(raw) : [];
+  //     setSaved(arr.some((x) => x.id === job.id));
+  //   } catch {}
+  // }, [job.id]);
 
   const toggleSave = () => {
     try {
@@ -490,13 +490,13 @@ function JobCard({ job }: { job: Job }) {
         arr.splice(idx, 1);
         setSaved(false);
       } else {
-        const city = jobCityKey(job);
-        const locationStr = `${job.district}, ${city}, ${job.province}`;
+        // const city = jobCityKey(job);
+        // const locationStr = `${job.district}, ${city}, ${job.province}`;
         arr.unshift({
           id: job.id,
           title: job.title,
-          company: job.company,
-          location: locationStr,
+          company: job.company_name,
+          location: job.location,
           savedAt: new Date().toISOString(),
           href: `/jobs/${job.id}`,
         });
@@ -515,7 +515,7 @@ function JobCard({ job }: { job: Job }) {
     try {
       if (navigator.share)
         await navigator.share({
-          title: `${job.title} — ${job.company}`,
+          title: `${job.title} — ${job.company_name}`,
           text: "Check out this job",
           url,
         });
@@ -526,11 +526,12 @@ function JobCard({ job }: { job: Job }) {
     } catch {}
   };
 
-  const city = jobCityKey(job);
-  const locationStr = `${job.district}, ${city}, ${job.province}`;
+  // const city = jobCityKey(job);
+  // const locationStr = `${job.district}, ${city}, ${job.province}`;
+  const locationStr = `${job.location}`;
 
   return (
-    <Card className={`relative transition-colors ${typeC.hover}`}>
+    <Card className={`relative`}>
       <div className="absolute right-2 top-2 md:right-3 md:top-3 flex gap-2">
         <Button
           variant="ghost"
@@ -557,14 +558,14 @@ function JobCard({ job }: { job: Job }) {
       <CardHeader className="space-y-2 pr-10 md:pr-12 xl:pr-14">
         <CardTitle className="text-base">{job.title}</CardTitle>
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className={`rounded px-2 py-0.5 ${typeC.badge}`}>
-            {labelize(job.type)}
+          <span className={`rounded px-2 py-0.5`}>
+            {labelize(job.employment_type)}
           </span>
-          <span className={`rounded px-2 py-0.5 ${polC.badge}`}>
+          {/* <span className={`rounded px-2 py-0.5 ${polC.badge}`}>
             {labelize(job.policy)}
-          </span>
-          <span className={`rounded px-2 py-0.5 ${expC.badge}`}>
-            {expLabel(job.exp)}
+          </span> */}
+          <span className={`rounded px-2 py-0.5`}>
+            {expLabel(job.experience_level)}
           </span>
         </div>
       </CardHeader>
@@ -573,7 +574,7 @@ function JobCard({ job }: { job: Job }) {
         <div className="mb-2 flex items-center gap-2">
           <Banknote className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium">
-            UZS {job.salaryMinM}–{job.salaryMaxM}M / month
+            UZS {job.salary_min}–{job.salary_max}M / month
           </span>
         </div>
         <div className="mb-2 text-sm text-muted-foreground">{job.company}</div>
@@ -596,7 +597,7 @@ function JobCard({ job }: { job: Job }) {
             Apply Now →
           </Link>
           <span className="text-xs text-muted-foreground">
-            Posted {job.postedAgo}
+            Posted {job.created_at}
           </span>
         </div>
       </CardContent>

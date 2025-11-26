@@ -1,8 +1,8 @@
 "use client";
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { createSession } from "@/lib/session";
-import { findUserByEmail } from "@/lib/dummy-users";
+// import { createSession } from "@/lib/session";
+// import { findUserByEmail } from "@/lib/dummy-users";
 import { loginAction } from "./actions";
 import { useEffect, useState, useTransition } from "react";
 import { Eye, EyeOff } from "lucide-react"; // pastikan sudah install lucide-react

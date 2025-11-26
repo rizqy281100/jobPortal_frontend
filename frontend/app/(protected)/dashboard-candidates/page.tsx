@@ -17,7 +17,7 @@ export default function DashboardCandidatePage() {
       <header className="rounded-xl border bg-card p-5">
         <h1 className="text-2xl font-semibold">Dashboard Candidate</h1>
         <p className="text-sm text-muted-foreground">
-          Selamat datang, {userName}! Kelola semua aktivitasmu di sini.
+          Welcome, {userName}! Kelola semua aktivitasmu di sini.
         </p>
       </header>
 
