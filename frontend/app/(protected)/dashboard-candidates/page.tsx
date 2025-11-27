@@ -113,11 +113,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SavedJobsClient from "./SavedJobsClient";
 import AppliedJobsClient from "./AppliedJobsClient";
 import UserSettingsClient from "./UserSettingsClient";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 
 export default function DashboardCandidatePage() {
+  const router = useRouter();
+  const params = useSearchParams();
   const { user } = useAppSelector((state) => state.auth);
 
+  // Ambil tab dari URL, kalau tidak ada default ke "overview"
+  const currentTab = params.get("tab") ?? "overview";
+
+  const handleChange = (value: string) => {
+    const newUrl = `?tab=${value}`;
+    router.push(newUrl, { scroll: false });
+  };
   // User sudah pasti ada karena sudah diproteksi di layout
   const userName = user?.name || "User";
 
@@ -127,7 +137,7 @@ export default function DashboardCandidatePage() {
       <header className="rounded-xl border bg-card p-5">
         <h1 className="text-2xl font-semibold">Dashboard Candidate</h1>
         <p className="text-sm text-muted-foreground">
-          Welcome, {userName}! Kelola semua aktivitasmu di sini.
+          Welcome, {userName}! Check all your activities here.
         </p>
       </header>
 
@@ -135,7 +145,9 @@ export default function DashboardCandidatePage() {
       <Tabs
         defaultValue="overview"
         orientation="vertical"
-        className="flex w-full flex-col lg:flex-row lg:space-x-8"
+        value={currentTab}
+        onValueChange={handleChange}
+        className="flex w-full space-x-8"
       >
         {/* ================= MOBILE & TABLET TABS (TOP BAR) ================= */}
         <div className="mb-4 w-full lg:hidden">

@@ -418,6 +418,9 @@ export default function RecruiterSettings() {
     companyName: "",
   });
 
+  const [industry, setIndustry] = useState("");
+  const [query, setQuery] = useState("a"); // ← default UZS
+  const [industryOptions, setIndustryOptions] = useState([]);
   const { accessToken, user } = useAppSelector((state) => state.auth);
 
   // Avatar preview state
@@ -426,9 +429,8 @@ export default function RecruiterSettings() {
   const [avatarPreviewFromBackend, setAvatarPreviewFromBackend] =
     React.useState<string | null>(null);
 
-  const userId = user?.id;
-
-  /* =================== LOAD BACKEND =================== */
+  const userId = user?.id; // ambil dari session kamu
+  const recruiterId = user?.id; // bisa setelah GET profile
   React.useEffect(() => {
     async function load() {
       try {
@@ -453,6 +455,26 @@ export default function RecruiterSettings() {
           if (r.avatar_url) {
             setAvatarPreviewFromBackend(r.avatar_url);
           }
+          setIndustry(r?.industry_id);
+        }
+
+        const industries = await api.get(`/industries`, {
+          headers: {
+            // Tambahkan header jika perlu, misal Authorization
+            Authorization: accessToken ? `Bearer ${accessToken}` : "",
+          },
+        });
+        // console.log(industries);
+        if (industries) {
+          const mapped = industries?.data.map(
+            (item: { id: string; name: string }) => ({
+              value: item.id,
+              label: item.name,
+            })
+          );
+          setIndustryOptions(mapped);
+        } else {
+          setIndustryOptions([]);
         }
       } catch (e) {
         console.error("Failed to load recruiter", e);
@@ -473,7 +495,20 @@ export default function RecruiterSettings() {
   React.useEffect(() => {
     localStorage.setItem(LS_KEY_RECRUITER, JSON.stringify(settings));
   }, [settings]);
+  const fetchIndustries = async (keyword = "") => {
+    const query = keyword ? `?search=${encodeURIComponent(keyword)}` : "";
 
+    const res = await api.get(`/industries${query}`, {
+      headers: {
+        Authorization: accessToken ? `Bearer ${accessToken}` : "",
+      },
+    });
+    const mapped = res?.data.map((item: { id: string; name: string }) => ({
+      value: item.id,
+      label: item.name,
+    }));
+    setIndustryOptions(mapped);
+  };
   /* =================== SAVE TO BACKEND =================== */
   const onSave = async () => {
     const formData = new FormData();
@@ -590,7 +625,9 @@ export default function RecruiterSettings() {
             <Field label="Contact Phone">
               <Input
                 placeholder="+62 812 3456 7890"
-                value={settings.contactPhone ?? ""}
+                maxLength={30}
+                name="contact_phone"
+                value={settings.contactPhone ?? ""} 
                 onChange={(e) =>
                   setSettings({
                     ...settings,
@@ -612,7 +649,8 @@ export default function RecruiterSettings() {
               />
             </Field>
 
-            <Field label="Industry">
+            {/* 6. Industry */}
+            {/* <Field label="Industry">
               <Input
                 placeholder="e.g. Information Technology"
                 value={settings.industry ?? ""}
@@ -620,8 +658,21 @@ export default function RecruiterSettings() {
                   setSettings({ ...settings, industry: e.target.value })
                 }
               />
-            </Field>
+            </Field> */}
+            <SearchableSelect
+              options={industryOptions}
+              value={industry}
+              onChange={setIndustry}
+              placeholder="Select Industries..."
+              onSearch={(text: string) => {
+                fetchIndustries(text);
+                setQuery(text);
+              }}
+              className="mt-1"
+            />
+            <input type="hidden" name="industry" value={industry} />
 
+            {/* 7. Description */}
             <Field label="Company Description" full>
               <textarea
                 rows={4}
