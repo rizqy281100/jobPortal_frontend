@@ -1,3 +1,112 @@
+// "use client";
+
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// import SavedJobsClient from "./SavedJobsClient";
+// import AppliedJobsClient from "./AppliedJobsClient";
+// import UserSettingsClient from "./UserSettingsClient";
+// import { useAppSelector } from "@/store/hooks";
+
+// export default function DashboardCandidatePage() {
+//   const { user } = useAppSelector((state) => state.auth);
+
+//   // User sudah pasti ada karena sudah diproteksi di layout
+//   const userName = user?.name || "User";
+
+//   return (
+//     <div className="p-6 space-y-6">
+//       <header className="rounded-xl border bg-card p-5">
+//         <h1 className="text-2xl font-semibold">Dashboard Candidate</h1>
+//         <p className="text-sm text-muted-foreground">
+//           Welcome, {userName}! Kelola semua aktivitasmu di sini.
+//         </p>
+//       </header>
+
+//       {/* --- Tabs Container --- */}
+//       <Tabs
+//         defaultValue="overview"
+//         orientation="vertical"
+//         className="flex w-full space-x-8"
+//       >
+//         {/* --- Tabs Sidebar --- */}
+//         <TabsList className="flex flex-col w-56 h-fit rounded-xl border bg-card p-2">
+//           <TabsTrigger
+//             value="overview"
+//             className="w-full justify-start px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition"
+//           >
+//             Overview
+//           </TabsTrigger>
+//           <TabsTrigger
+//             value="applied"
+//             className="w-full justify-start px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition"
+//           >
+//             Applied Jobs
+//           </TabsTrigger>
+//           <TabsTrigger
+//             value="favorites"
+//             className="w-full justify-start px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition"
+//           >
+//             Saved Jobs
+//           </TabsTrigger>
+//           <TabsTrigger
+//             value="user_settings"
+//             className="w-full justify-start px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition"
+//           >
+//             User Settings
+//           </TabsTrigger>
+//         </TabsList>
+
+//         {/* --- Tabs Content Area --- */}
+//         <div className="flex-1">
+//           <TabsContent value="overview">
+//             <div className="rounded-lg border bg-background p-6 shadow-sm">
+//               <h2 className="text-lg font-semibold mb-2">
+//                 Ringkasan Aktivitas
+//               </h2>
+//               <p className="text-sm text-muted-foreground">
+//                 Lihat sekilas progress lamaran dan aktivitasmu di platform ini.
+//               </p>
+
+//               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+//                 <div className="rounded-lg border p-4 text-center">
+//                   <p className="text-2xl font-bold">3</p>
+//                   <p className="text-sm text-muted-foreground">Lamaran Aktif</p>
+//                 </div>
+//                 <div className="rounded-lg border p-4 text-center">
+//                   <p className="text-2xl font-bold">5</p>
+//                   <p className="text-sm text-muted-foreground">
+//                     Sudah Diterima
+//                   </p>
+//                 </div>
+//                 <div className="rounded-lg border p-4 text-center">
+//                   <p className="text-2xl font-bold">2</p>
+//                   <p className="text-sm text-muted-foreground">Ditolak</p>
+//                 </div>
+//                 <div className="rounded-lg border p-4 text-center">
+//                   <p className="text-2xl font-bold">4</p>
+//                   <p className="text-sm text-muted-foreground">Favorit</p>
+//                 </div>
+//               </div>
+//             </div>
+//           </TabsContent>
+
+//           <TabsContent value="applied">
+//             <AppliedJobsClient />
+//           </TabsContent>
+
+//           {/* ======= Saved Jobs ======= */}
+//           <TabsContent value="favorites">
+//             <SavedJobsClient />
+//           </TabsContent>
+
+//           <TabsContent value="user_settings">
+//             <UserSettingsClient />
+//           </TabsContent>
+//         </div>
+//       </Tabs>
+//     </div>
+//   );
+// }
+
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +123,7 @@ export default function DashboardCandidatePage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* ===== Header ===== */}
       <header className="rounded-xl border bg-card p-5">
         <h1 className="text-2xl font-semibold">Dashboard Candidate</h1>
         <p className="text-sm text-muted-foreground">
@@ -21,42 +131,138 @@ export default function DashboardCandidatePage() {
         </p>
       </header>
 
-      {/* --- Tabs Container --- */}
+      {/* ===== Tabs Root ===== */}
       <Tabs
         defaultValue="overview"
         orientation="vertical"
-        className="flex w-full space-x-8"
+        className="flex w-full flex-col lg:flex-row lg:space-x-8"
       >
-        {/* --- Tabs Sidebar --- */}
-        <TabsList className="flex flex-col w-56 h-fit rounded-xl border bg-card p-2">
-          <TabsTrigger
-            value="overview"
-            className="w-full justify-start px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition"
+        {/* ================= MOBILE & TABLET TABS (TOP BAR) ================= */}
+        <div className="mb-4 w-full lg:hidden">
+          {/* Mobile: scroll horizontal */}
+          <TabsList
+            className="
+              flex sm:hidden w-full gap-2
+              overflow-x-auto no-scrollbar whitespace-nowrap
+              rounded-xl bg-card p-1.5 shadow-sm
+            "
           >
-            Overview
-          </TabsTrigger>
-          <TabsTrigger
-            value="applied"
-            className="w-full justify-start px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition"
-          >
-            Applied Jobs
-          </TabsTrigger>
-          <TabsTrigger
-            value="favorites"
-            className="w-full justify-start px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition"
-          >
-            Saved Jobs
-          </TabsTrigger>
-          <TabsTrigger
-            value="user_settings"
-            className="w-full justify-start px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition"
-          >
-            User Settings
-          </TabsTrigger>
-        </TabsList>
+            <TabsTrigger
+              value="overview"
+              className="px-4 py-2 rounded-lg text-sm shrink-0"
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger
+              value="applied"
+              className="px-4 py-2 rounded-lg text-sm shrink-0"
+            >
+              Applied
+            </TabsTrigger>
+            <TabsTrigger
+              value="favorites"
+              className="px-4 py-2 rounded-lg text-sm shrink-0"
+            >
+              Favorites
+            </TabsTrigger>
+            <TabsTrigger
+              value="user_settings"
+              className="px-4 py-2 rounded-lg text-sm shrink-0"
+            >
+              Settings
+            </TabsTrigger>
+          </TabsList>
 
-        {/* --- Tabs Content Area --- */}
+          {/* Tablet: grid 4 kolom, full width, rata */}
+          <TabsList
+            className="
+              hidden sm:grid lg:hidden
+              grid-cols-4
+              w-full
+              bg-card
+              p-1
+              rounded-xl
+              shadow-sm
+              text-center
+              gap-1
+            "
+          >
+            <TabsTrigger
+              value="overview"
+              className="
+                w-full py-2 text-sm rounded-md
+                data-[state=active]:bg-primary data-[state=active]:text-primary-foreground
+              "
+            >
+              Overview
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="applied"
+              className="
+                w-full py-2 text-sm rounded-md
+                data-[state=active]:bg-primary data-[state=active]:text-primary-foreground
+              "
+            >
+              Applied
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="favorites"
+              className="
+                w-full py-2 text-sm rounded-md
+                data-[state=active]:bg-primary data-[state=active]:text-primary-foreground
+              "
+            >
+              Favorites
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="user_settings"
+              className="
+                w-full py-2 text-sm rounded-md
+                data-[state=active]:bg-primary data-[state=active]:text-primary-foreground
+              "
+            >
+              Settings
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* ================= DESKTOP SIDEBAR + CONTENT ================= */}
+        {/* Sidebar kiri hanya di desktop */}
+        <div className="hidden lg:block lg:w-56 lg:flex-shrink-0">
+          <TabsList className="flex flex-col w-full h-fit rounded-xl border bg-card p-2">
+            <TabsTrigger
+              value="overview"
+              className="w-full justify-start px-4 py-2 rounded-md transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger
+              value="applied"
+              className="w-full justify-start px-4 py-2 rounded-md transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Applied Jobs
+            </TabsTrigger>
+            <TabsTrigger
+              value="favorites"
+              className="w-full justify-start px-4 py-2 rounded-md transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Saved Jobs
+            </TabsTrigger>
+            <TabsTrigger
+              value="user_settings"
+              className="w-full justify-start px-4 py-2 rounded-md transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              User Settings
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* ===== Tabs Content Area (shared untuk semua breakpoint) ===== */}
         <div className="flex-1">
+          {/* Overview */}
           <TabsContent value="overview">
             <div className="rounded-lg border bg-background p-6 shadow-sm">
               <h2 className="text-lg font-semibold mb-2">
@@ -89,15 +295,17 @@ export default function DashboardCandidatePage() {
             </div>
           </TabsContent>
 
+          {/* Applied Jobs */}
           <TabsContent value="applied">
             <AppliedJobsClient />
           </TabsContent>
 
-          {/* ======= Saved Jobs ======= */}
+          {/* Saved Jobs */}
           <TabsContent value="favorites">
             <SavedJobsClient />
           </TabsContent>
 
+          {/* User Settings */}
           <TabsContent value="user_settings">
             <UserSettingsClient />
           </TabsContent>
