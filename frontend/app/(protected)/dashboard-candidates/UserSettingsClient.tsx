@@ -63,6 +63,18 @@ type PortfolioItem = {
   link?: string;
 };
 
+type CertificationItem = {
+  id: string;
+  name: string;
+  url: string;
+  issuer: string;
+  issue_date: string | null;
+  expiry_date: string | null;
+  credential_id?: string | null;
+  is_active: boolean;
+  isSaved?: boolean; // ⬅ untuk cek apakah sudah tersimpan di server
+};
+
 type Education = {
   id: string;
   school: string;
@@ -71,16 +83,6 @@ type Education = {
   start: string;
   end?: string;
   current?: boolean;
-};
-type CertItem = {
-  id: string;
-  title: string;
-  issuer: string;
-  issueDate?: string;
-  expiryDate?: string;
-  fileName?: string;
-  size?: number;
-  url?: string;
 };
 
 type Profile = {
@@ -166,6 +168,9 @@ export default function UserSettingsClient() {
   const [nationality, setNationality] = React.useState("");
   const [nationalitiesOptions, setNationalitiesOptions] = React.useState<
     string[]
+  >([]);
+  const [certifications, setCertifications] = React.useState<
+    CertificationItem[]
   >([]);
   const [skillsBank, setSkillsBank] = React.useState<string[]>([]);
   const [work, setWork] = React.useState<WorkItem[]>([]);
@@ -914,21 +919,85 @@ export default function UserSettingsClient() {
   };
 
   /** ===== Certs ===== */
-  const addCert = () =>
-    setCerts((c) => [
-      { id: uid("c_"), title: "", issuer: "", issueDate: "" },
-      ...c,
+  // Add local only
+  const addCertification = () =>
+    setCertifications((p) => [
+      {
+        id: uid("cert_"),
+        name: "",
+        issuer: "",
+        url: "",
+        issue_date: null,
+        expiry_date: null,
+        credential_id: "",
+        is_active: true,
+        isSaved: false,
+      },
+      ...p,
     ]);
-  const updateCert = (id: string, patch: Partial<CertItem>) =>
-    setCerts((c) => c.map((x) => (x.id === id ? { ...x, ...patch } : x)));
-  const removeCert = (id: string) =>
-    setCerts((c) => c.filter((x) => x.id !== id));
-  const onCertFile = (id: string, f?: File) => {
-    if (!f) return;
-    if (!/application\/pdf/i.test(f.type)) return alert("Only PDF allowed");
-    if (f.size > 2 * 1024 * 1024) return alert("Max 2 MB");
-    const url = URL.createObjectURL(f);
-    updateCert(id, { url, fileName: f.name, size: f.size });
+
+  // Update ONLY local state
+  const updateCertification = (id: string, patch: Partial<CertificationItem>) =>
+    setCertifications((p) =>
+      p.map((x) => (x.id === id ? { ...x, ...patch } : x))
+    );
+
+  // Delete local OR API
+  const removeCertification = async (id: string) => {
+    const cert = certifications.find((c) => c.id === id);
+    if (!cert) return;
+
+    // if not saved yet
+    if (!cert.isSaved) {
+      setCertifications((p) => p.filter((x) => x.id !== id));
+      return;
+    }
+
+    // if saved -> call API
+    await api.delete(`/workers/cert/${id}`);
+    setCertifications((p) => p.filter((x) => x.id !== id));
+  };
+
+  // Manual save button
+  const saveCertification = async (id: string) => {
+    const cert = certifications.find((c) => c.id === id);
+    if (!cert) return;
+
+    if (!cert.name || !cert.issuer || !cert.issue_date) {
+      alert("Name, Issuer and Issue Date are required.");
+      return;
+    }
+
+    // If it's new (local only)
+    if (!cert.isSaved) {
+      const res = await api.post("/workers/cert", {
+        name: cert.name,
+        issuer: cert.issuer,
+        issue_date: cert.issue_date,
+        expiry_date: cert.expiry_date || null,
+        credential_id: cert.credential_id || null,
+        is_active: cert.is_active,
+      });
+
+      // Replace temp ID with real ID
+      setCertifications((p) =>
+        p.map((x) =>
+          x.id === id ? { ...x, id: res.data.id, isSaved: true } : x
+        )
+      );
+
+      return;
+    }
+
+    // Update via API
+    await api.put(`/workers/cert/${id}`, {
+      name: cert.name,
+      issuer: cert.issuer,
+      issue_date: cert.issue_date,
+      expiry_date: cert.expiry_date || null,
+      credential_id: cert.credential_id || null,
+      is_active: cert.is_active,
+    });
   };
 
   /* -------------------------------------------------------------------- */
@@ -1397,7 +1466,7 @@ export default function UserSettingsClient() {
           <section className="rounded-2xl border bg-card/80 p-5 sm:p-6">
             {/* Work Experience */}
 
-            <div className="mb-6 mt-8 space-y-3 rounded-xl border p-4">
+            <div className="mb-6 space-y-3 rounded-xl border p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h4 className="text-lg font-semibold">Work Experience</h4>
 
@@ -1614,101 +1683,112 @@ export default function UserSettingsClient() {
             </div>
 
             {/* Certifications */}
-            <div>
-              <div className="mb-2 mt-8 flex items-center justify-between">
-                <h3 className="text-lg font-semibold">
-                  Certifications (PDF, max 2MB)
-                </h3>
+            <div className="mt-8 space-y-3 rounded-xl border p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h4 className="text-lg font-semibold">Certifications</h4>
+
                 <button
-                  onClick={addCert}
+                  onClick={addCertification}
                   className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-accent"
                 >
-                  <Plus className="h-4 w-4" />
-                  Add
+                  <Plus className="h-4 w-4" /> Add
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 gap-3">
-                {certs.map((c) => (
-                  <div key={c.id} className="rounded-xl border p-3">
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                      <LabeledInput
-                        label="Title/Name"
-                        required
-                        value={c.title}
-                        onChange={(v) => updateCert(c.id, { title: v })}
-                        placeholder="e.g. AWS Certified Solutions Architect"
-                      />
-                      <LabeledInput
-                        label="Issuer"
-                        required
-                        value={c.issuer}
-                        onChange={(v) => updateCert(c.id, { issuer: v })}
-                        placeholder="e.g. Amazon Web Services"
-                      />
-                      <LabeledInput
-                        label="Issue date"
-                        type="date"
-                        value={c.issueDate ?? ""}
-                        onChange={(v) => updateCert(c.id, { issueDate: v })}
-                      />
-                      <LabeledInput
-                        label="Expiry date"
-                        type="date"
-                        value={c.expiryDate ?? ""}
-                        onChange={(v) => updateCert(c.id, { expiryDate: v })}
-                      />
-                    </div>
+              {certifications.map((cert) => (
+                <div key={cert.id} className="rounded-xl border p-3 space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <LabeledInput
+                      label="Certification Name"
+                      required
+                      value={cert.name}
+                      onChange={(v) =>
+                        updateCertification(cert.id, { name: v })
+                      }
+                      placeholder="Certification name..."
+                    />
 
-                    <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-                      <div className="text-xs text-muted-foreground">
-                        {c.fileName ? (
-                          <>
-                            {c.fileName} · {c.size ? fmtSize(c.size) : ""}
-                          </>
-                        ) : (
-                          <>No file</>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-accent">
-                          <Upload className="h-4 w-4" />
-                          Upload PDF
-                          <input
-                            type="file"
-                            accept="application/pdf"
-                            className="hidden"
-                            onChange={(e) =>
-                              onCertFile(c.id, e.target.files?.[0])
-                            }
-                          />
-                        </label>
-                        {c.url && (
-                          <a
-                            href={c.url}
-                            target="_blank"
-                            className="rounded-lg border px-3 py-1.5 text-sm hover:bg-accent"
-                          >
-                            Preview
-                          </a>
-                        )}
-                        <button
-                          className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          onClick={() => removeCert(c.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Remove
-                        </button>
-                      </div>
+                    <LabeledInput
+                      label="Issuer"
+                      required
+                      value={cert.issuer}
+                      onChange={(v) =>
+                        updateCertification(cert.id, { issuer: v })
+                      }
+                      placeholder="Issued by..."
+                    />
+
+                    <LabeledInput
+                      label="Credential ID (optional)"
+                      value={cert.credential_id ?? ""}
+                      onChange={(v) =>
+                        updateCertification(cert.id, { credential_id: v })
+                      }
+                      placeholder="Credential ID..."
+                    />
+                  </div>
+                  <LabeledInput
+                    label="Certification URL"
+                    value={cert.url ?? ""}
+                    onChange={(v) => updateCertification(cert.id, { url: v })}
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <LabeledInput
+                      label="Issue Date"
+                      type="date"
+                      required
+                      value={cert.issue_date ?? ""}
+                      onChange={(v) =>
+                        updateCertification(cert.id, { issue_date: v || null })
+                      }
+                    />
+
+                    <LabeledInput
+                      label="Expiry Date (optional)"
+                      type="date"
+                      value={cert.expiry_date ?? ""}
+                      onChange={(v) =>
+                        updateCertification(cert.id, { expiry_date: v || null })
+                      }
+                    />
+
+                    <div className="flex items-center gap-2 mt-6">
+                      <input
+                        type="checkbox"
+                        checked={cert.is_active}
+                        onChange={(e) =>
+                          updateCertification(cert.id, {
+                            is_active: e.target.checked,
+                          })
+                        }
+                      />
+                      <label>Is Active</label>
                     </div>
                   </div>
-                ))}
-                {!certs.length && (
-                  <div className="rounded-xl border p-4 text-sm text-muted-foreground">
-                    No Certification Data.
+
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => saveCertification(cert.id)}
+                      className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-accent"
+                    >
+                      <Save className="h-4 w-4" /> Save
+                    </button>
+
+                    <button
+                      onClick={() => removeCertification(cert.id)}
+                      className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <Trash2 className="h-4 w-4" /> Remove
+                    </button>
                   </div>
-                )}
-              </div>
+                </div>
+              ))}
+
+              {!certifications.length && (
+                <div className="rounded-xl border p-4 text-sm text-muted-foreground">
+                  No certifications added.
+                </div>
+              )}
             </div>
 
             {/* <div className="mt-6 flex justify-end">

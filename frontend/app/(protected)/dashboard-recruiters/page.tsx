@@ -84,89 +84,71 @@ export default function DashboardRecruiterPage() {
         </p>
       </header>
 
-      {/* --- Tabs Container --- */}
       <Tabs
         defaultValue={tab ?? "overview"}
-        orientation="vertical"
         value={currentTab}
         onValueChange={handleChange}
+        orientation="vertical"
         className="flex w-full space-x-8"
       >
-        {/* --- Tabs Sidebar --- */}
-        <TabsList className="flex flex-col w-56 h-fit rounded-xl border bg-card p-2">
+        {/* Sidebar tabs (desktop) */}
+        <TabsList className="hidden lg:flex flex-col w-56 h-fit rounded-xl border bg-card p-2">
           <TabsTrigger
             value="overview"
-            className="w-full justify-start px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition"
+            className="w-full justify-start px-4 py-2 rounded-md transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
-            <TabsTrigger
-              value="overview"
-              className="rounded-lg px-4 py-2 text-center text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              Overview
-            </TabsTrigger>
+            Overview
+          </TabsTrigger>
 
-            <TabsTrigger
-              value="post"
-              className="rounded-lg px-4 py-2 text-center text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              Post a Job
-            </TabsTrigger>
+          <TabsTrigger
+            value="post"
+            className="w-full justify-start px-4 py-2 rounded-md transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            Post a Job
+          </TabsTrigger>
 
-            <TabsTrigger
-              value="favorites"
-              className="rounded-lg px-4 py-2 text-center text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              Saved Jobs
-            </TabsTrigger>
+          <TabsTrigger
+            value="user_settings"
+            className="w-full justify-start px-4 py-2 rounded-md transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            User Settings
+          </TabsTrigger>
+        </TabsList>
 
-            <TabsTrigger
-              value="user_settings"
-              className="rounded-lg px-4 py-2 text-center text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              User Settings
-            </TabsTrigger>
-          </TabsList>
+        {/* Desktop content */}
+        <div className="hidden lg:flex flex-1">
+          <DashboardContents jobs={jobs} />
         </div>
 
-        {/* =============== DESKTOP LAYOUT (SIDEBAR) =============== */}
-        <div className="hidden lg:flex w-full space-x-8">
-          {/* Sidebar tabs */}
-          <TabsList className="flex flex-col w-56 h-fit rounded-xl border bg-card p-2">
+        {/* Mobile tabs list */}
+        <div className="lg:hidden w-full">
+          <TabsList className="grid grid-cols-2 gap-2 rounded-xl border bg-card p-2">
             <TabsTrigger
               value="overview"
-              className="w-full justify-start px-4 py-2 rounded-md transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="px-4 py-2 rounded-md text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
               Overview
             </TabsTrigger>
+
             <TabsTrigger
               value="post"
-              className="w-full justify-start px-4 py-2 rounded-md transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="px-4 py-2 rounded-md text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
               Post a Job
             </TabsTrigger>
-            <TabsTrigger
-              value="favorites"
-              className="w-full justify-start px-4 py-2 rounded-md transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              Saved Jobs
-            </TabsTrigger>
+
             <TabsTrigger
               value="user_settings"
-              className="w-full justify-start px-4 py-2 rounded-md transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="px-4 py-2 rounded-md text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
               User Settings
             </TabsTrigger>
           </TabsList>
 
-          {/* Desktop content */}
-          <div className="flex-1">
+          {/* Mobile content */}
+          <div className="mt-4">
             <DashboardContents jobs={jobs} />
           </div>
-        </div>
-
-        {/* =============== CONTENT MOBILE/TABLET =============== */}
-        <div className="lg:hidden mt-4">
-          <DashboardContents jobs={jobs} />
         </div>
       </Tabs>
     </div>
@@ -181,8 +163,8 @@ function DashboardContents({ jobs }: { jobs: any[] }) {
   return (
     <>
       {/* Overview */}
-      <TabsContent value="overview">
-        <div className="rounded-lg border bg-background p-4 sm:p-6 shadow-sm">
+      <TabsContent value="overview" className="w-full">
+        <div className="rounded-lg border bg-background p-4 sm:p-6 shadow-sm ">
           <h2 className="text-lg font-semibold mb-2">Overview</h2>
           <p className="text-sm text-muted-foreground">
             See a quick glance of your activities as a recruiter.
