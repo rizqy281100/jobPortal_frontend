@@ -36,6 +36,7 @@
     "cmdk": "^1.1.1",
     "cobe": "^0.6.5",
     "command": "^1.1.1",
+    "date-fns": "^4.1.0",
     "dotted-map": "^2.2.3",
     "framer-motion": "^12.23.24",
     "js-cookie": "^3.0.5",
