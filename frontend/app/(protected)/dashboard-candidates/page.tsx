@@ -36,7 +36,7 @@ export default function DashboardCandidatePage() {
 
       {/* ===== Tabs Root ===== */}
       <Tabs
-        defaultValue="overview"
+        defaultValue={currentTab ?? "overview"}
         orientation="vertical"
         value={currentTab}
         onValueChange={handleChange}
@@ -46,43 +46,37 @@ export default function DashboardCandidatePage() {
         {/* ================= MOBILE & TABLET TABS (TOP BAR) ================= */}
         <div className="w-full lg:hidden">
           {/* Mobile: scroll horizontal */}
-          <TabsList
-            className="
-              flex sm:hidden w-full gap-2
-              overflow-x-auto no-scrollbar whitespace-nowrap
-              rounded-xl bg-card p-1.5 shadow-sm
-            "
-          >
+          <TabsList className="justify-items-start w-full">
             <TabsTrigger
               value="overview"
-              className="px-4 py-2 rounded-lg text-sm shrink-0"
+              className="w-full rounded-lg text-sm data-[state=active]:bg-primary"
             >
               Overview
             </TabsTrigger>
             <TabsTrigger
               value="applied"
-              className="px-4 py-2 rounded-lg text-sm shrink-0"
+              className="w-full rounded-lg text-sm data-[state=active]:bg-primary"
             >
               Applied
             </TabsTrigger>
             <TabsTrigger
               value="favorites"
-              className="px-4 py-2 rounded-lg text-sm shrink-0"
+              className="w-full rounded-lg text-sm data-[state=active]:bg-primary"
             >
               Favorites
             </TabsTrigger>
             <TabsTrigger
               value="user_settings"
-              className="px-4 py-2 rounded-lg text-sm shrink-0"
+              className="w-full rounded-lg text-sm data-[state=active]:bg-primary"
             >
               Settings
             </TabsTrigger>
           </TabsList>
 
           {/* Tablet: grid 4 kolom full width */}
-          <TabsList
+          {/* <TabsList
             className="
-              hidden sm:grid lg:hidden
+              hidden sm:grid md:hidden lg:hidden
               grid-cols-4
               w-full
               bg-card
@@ -131,7 +125,7 @@ export default function DashboardCandidatePage() {
             >
               Settings
             </TabsTrigger>
-          </TabsList>
+          </TabsList> */}
         </div>
 
         {/* ================= DESKTOP SIDEBAR ================= */}
@@ -139,25 +133,25 @@ export default function DashboardCandidatePage() {
           <TabsList className="flex flex-col w-full h-fit rounded-xl border bg-card p-2">
             <TabsTrigger
               value="overview"
-              className="w-full justify-start px-4 py-2 rounded-md text-sm transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="w-full justify-start px-4 py-2 rounded-md text-sm transition data-[state=active]:bg-primary"
             >
               Overview
             </TabsTrigger>
             <TabsTrigger
               value="applied"
-              className="w-full justify-start px-4 py-2 rounded-md text-sm transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="w-full justify-start px-4 py-2 rounded-md text-sm transition data-[state=active]:bg-primary"
             >
               Applied Jobs
             </TabsTrigger>
             <TabsTrigger
               value="favorites"
-              className="w-full justify-start px-4 py-2 rounded-md text-sm transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="w-full justify-start px-4 py-2 rounded-md text-sm transition data-[state=active]:bg-primary"
             >
               Saved Jobs
             </TabsTrigger>
             <TabsTrigger
               value="user_settings"
-              className="w-full justify-start px-4 py-2 rounded-md text-sm transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="w-full justify-start px-4 py-2 rounded-md text-sm transition data-[state=active]:bg-primary"
             >
               User Settings
             </TabsTrigger>

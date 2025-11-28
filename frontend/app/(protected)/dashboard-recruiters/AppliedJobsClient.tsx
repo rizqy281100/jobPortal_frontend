@@ -192,16 +192,23 @@ export default function PostJobForm() {
           Salary type: <span className="font-medium">Fixed (per month)</span>
         </p>
       </div>
-      <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-4">
+      <div
+        className="
+  space-y-4
+  sm:space-y-0
+  sm:grid sm:grid-cols-3 sm:gap-4
+  md:grid-cols-3
+"
+      >
         <h3 className="font-semibold text-base col-span-3">
           Advanced Information
         </h3>
 
         {/* Education */}
-        <div className="col-span-1">
+        <div className="">
           <Label>Education</Label>
-          <Select className="w-full">
-            <SelectTrigger className="mt-1">
+          <Select>
+            <SelectTrigger className="mt-1 w-full">
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
             <SelectContent>
@@ -218,7 +225,7 @@ export default function PostJobForm() {
         <div className="col-span-1">
           <Label>Experience</Label>
           <Select>
-            <SelectTrigger className="mt-1">
+            <SelectTrigger className="mt-1 w-full">
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
             <SelectContent>
@@ -235,7 +242,7 @@ export default function PostJobForm() {
         <div className="col-span-1">
           <Label>Job Type</Label>
           <Select name="employment_type_id">
-            <SelectTrigger className="mt-1">
+            <SelectTrigger className="mt-1 w-full">
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
             <SelectContent>
@@ -252,7 +259,7 @@ export default function PostJobForm() {
         <div className="col-span-1">
           <Label>Job Level</Label>
           <Select name="experience_level_id">
-            <SelectTrigger className="mt-1">
+            <SelectTrigger className="mt-1 w-full">
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
             <SelectContent>
@@ -271,7 +278,7 @@ export default function PostJobForm() {
             id="expiration"
             name="deadline"
             type="date"
-            className="mt-1"
+            className="mt-1 w-full"
             onChange={(e) => setDeadline(e.target.value)}
           />
         </div>
@@ -297,7 +304,7 @@ export default function PostJobForm() {
       </div>
 
       {/* Submit */}
-      <Button type="submit" className="mt-2">
+      <Button type="submit" className="mt-2 dark:text-white light:text-dark">
         Post Job →
       </Button>
     </form>

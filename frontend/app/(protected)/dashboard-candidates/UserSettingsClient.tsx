@@ -955,16 +955,7 @@ export default function UserSettingsClient() {
         defaultValue="Personal Information"
         className="w-full flex flex-col gap-4"
       >
-        <TabsList
-          className="
-      w-full
-      grid grid-cols-3
-      place-items-stretch
-      rounded-xl bg-card p-1.5
-      shadow-sm
-      gap-2
-    "
-        >
+        <TabsList className="justify-items-start w-full">
           <TabsTrigger
             value="Personal Information"
             className="
