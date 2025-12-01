@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 export default function CTA() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 md:py-14 lg:py-16">
-      <div className="relative overflow-hidden rounded-3xl bg-primary text-primary-foreground">
+      <div className="relative overflow-hidden rounded-3xl bg-blue-600 text-white">
         <div className="grid items-center gap-8 p-6 md:grid-cols-2 md:p-10 lg:p-12">
           {/* Left: copy + button */}
           <div>

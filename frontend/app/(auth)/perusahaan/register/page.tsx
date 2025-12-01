@@ -11,7 +11,7 @@ import {
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { registerAction } from "./actions";
-import { Eye, EyeOff } from "lucide-react"; // pastikan sudah install lucide-react
+import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);

@@ -1,151 +1,142 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+
 import {
   IconBrandGithubFilled,
   IconBrandGoogleFilled,
-  IconBrandOnlyfans,
 } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
+
 import { registerAction } from "./actions";
-import { Eye, EyeOff } from "lucide-react"; // pastikan sudah install lucide-react
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const router = useRouter();
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
 
     const formData = new FormData(e.currentTarget);
-    console.log(formData);
     const result = await registerAction(formData);
 
     if (result?.success) {
-      setSuccess("Registration successful!");
+      setSuccess("Registration successful! Redirecting...");
       router.push("/login?fromRegister=true");
     } else {
       setError(result?.error || "Registration failed");
     }
   }
-  return (
-    <div className="shadow-input mx-auto w-full max-w-md rounded-none bg-white p-4 sm:rounded-2xl sm:p-8 dark:bg-black mt-20">
-      {/* <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-200">
-        Welcome to JobPortal
-      </h2>
-      <p className="mt-2 max-w-sm text-sm text-neutral-600 dark:text-neutral-300">
-        Please register your account here
-      </p> */}
 
-      <form className="my-8" onSubmit={handleSubmit}>
-        <div className="mb-4 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
-          <LabelInputContainer>
-            <Label htmlFor="firstname">First name</Label>
-            <Input
-              id="firstname"
-              name="firstname"
-              placeholder="Tyler"
-              type="text"
-            />
-          </LabelInputContainer>
-          <LabelInputContainer>
-            <Label htmlFor="lastname">Last name</Label>
-            <Input
-              id="lastname"
-              name="lastname"
-              placeholder="Durden"
-              type="text"
-            />
-          </LabelInputContainer>
+  return (
+    <main className="min-h-screen flex items-center justify-center px-4 bg-background">
+      <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+        {/* HEADER */}
+        <div className="space-y-1 text-center mb-6">
+          <h1 className="text-2xl font-semibold">Create an account</h1>
+          <p className="text-sm text-muted-foreground">
+            Register to start finding your next job opportunity.
+          </p>
         </div>
 
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="username">Username</Label>
-          <Input
-            id="username"
-            name="username"
-            placeholder="TylerDurden"
-            type="text"
-          />
-        </LabelInputContainer>
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="email">Email Address</Label>
-          <Input
-            id="email"
-            name="email"
-            placeholder="projectmayhem@fc.com"
-            type="email"
-          />
-        </LabelInputContainer>
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="password">Password</Label>
-          <div className="relative">
-            <Input
-              id="password"
-              name="password"
-              placeholder="password"
-              type={showPassword ? "text" : "password"}
-            />
+        {/* ALERTS */}
+        {error && (
+          <p className="mb-4 rounded-md border border-red-300 bg-red-100 px-3 py-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-900/20 dark:text-red-300">
+            {error}
+          </p>
+        )}
+        {success && (
+          <p className="mb-4 rounded-md border border-emerald-300 bg-emerald-100 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-900 dark:bg-emerald-900/20 dark:text-emerald-300">
+            {success}
+          </p>
+        )}
+
+        {/* FORM */}
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
+            <LabelInputContainer>
+              <Label htmlFor="firstname">First name</Label>
+              <Input id="firstname" name="firstname" placeholder="Tyler" />
+            </LabelInputContainer>
+
+            <LabelInputContainer>
+              <Label htmlFor="lastname">Last name</Label>
+              <Input id="lastname" name="lastname" placeholder="Durden" />
+            </LabelInputContainer>
+          </div>
+
+          <LabelInputContainer>
+            <Label htmlFor="username">Username</Label>
+            <Input id="username" name="username" placeholder="TylerDurden" />
+          </LabelInputContainer>
+
+          <LabelInputContainer>
+            <Label htmlFor="email">Email address</Label>
+            <Input id="email" name="email" placeholder="projectmayhem@fc.com" />
+          </LabelInputContainer>
+
+          <LabelInputContainer>
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                placeholder="••••••••"
+                type={showPassword ? "text" : "password"}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-2 flex items-center text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </LabelInputContainer>
+
+          {/* PRIMARY BUTTON */}
+          <button
+            type="submit"
+            className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground dark:text-white hover:opacity-90 transition"
+          >
+            Sign up
+          </button>
+
+          {/* DIVIDER */}
+          <div className="my-6 h-[1px] w-full bg-muted" />
+
+          {/* SOCIAL BUTTONS */}
+          <div className="flex flex-col space-y-3">
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700"
+              className="flex h-10 w-full items-center space-x-2 rounded-md border bg-muted px-4 text-sm hover:bg-muted/80 transition"
             >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              <IconBrandGithubFilled className="h-4 w-4" />
+              <span>Sign up with GitHub</span>
+            </button>
+
+            <button
+              type="button"
+              className="flex h-10 w-full items-center space-x-2 rounded-md border bg-muted px-4 text-sm hover:bg-muted/80 transition"
+            >
+              <IconBrandGoogleFilled className="h-4 w-4 text-red-500" />
+              <span>Sign up with Google</span>
             </button>
           </div>
-        </LabelInputContainer>
-
-        <button
-          className="group/btn relative block h-10 w-full rounded-md bg-gradient-to-br from-black to-neutral-600 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:bg-zinc-800 dark:from-zinc-900 dark:to-zinc-900 dark:shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset]"
-          type="submit"
-        >
-          Sign up &rarr;
-          <BottomGradient />
-        </button>
-
-        <div className="my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-neutral-300 to-transparent dark:via-neutral-700" />
-
-        <div className="flex flex-col space-y-4">
-          <button
-            className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_#262626]"
-            type="submit"
-          >
-            <IconBrandGithubFilled className="h-4 w-4 text-neutral-800 dark:text-neutral-300" />
-            <span className="text-sm text-neutral-700 dark:text-neutral-300">
-              GitHub
-            </span>
-            <BottomGradient />
-          </button>
-          <button
-            className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_#262626]"
-            type="submit"
-          >
-            <IconBrandGoogleFilled className="h-4 w-4 text-red-500  dark:text-neutral-300" />
-            <span className="text-sm text-neutral-700 dark:text-neutral-300">
-              Google
-            </span>
-            <BottomGradient />
-          </button>
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
+    </main>
   );
 }
-
-const BottomGradient = () => {
-  return (
-    <>
-      <span className="absolute inset-x-0 -bottom-px block h-px w-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-0 transition duration-500 group-hover/btn:opacity-100" />
-      <span className="absolute inset-x-10 -bottom-px mx-auto block h-px w-1/2 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 blur-sm transition duration-500 group-hover/btn:opacity-100" />
-    </>
-  );
-};
 
 const LabelInputContainer = ({
   children,
@@ -153,10 +144,8 @@ const LabelInputContainer = ({
 }: {
   children: React.ReactNode;
   className?: string;
-}) => {
-  return (
-    <div className={cn("flex w-full flex-col space-y-2", className)}>
-      {children}
-    </div>
-  );
-};
+}) => (
+  <div className={cn("flex w-full flex-col space-y-2", className)}>
+    {children}
+  </div>
+);

@@ -142,7 +142,7 @@ export default function LoginPage() {
             Forgot password?
           </Link>
           <Link
-            href="/register"
+            href="/perusahaan/register"
             className="text-primary underline-offset-4 hover:underline"
           >
             Create account
