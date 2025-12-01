@@ -17,30 +17,62 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, CheckCircle, XCircle, Users } from "lucide-react";
+import {
+  MoreHorizontal,
+  CheckCircle,
+  XCircle,
+  Users,
+  Clock,
+  Notebook,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 import AppliedJobsClient from "./AppliedJobsClient";
 import RecruiterSettings from "./RecruiterSettings";
 
 import { useAppSelector } from "@/store/hooks";
 import { useRouter, useSearchParams } from "next/navigation";
+import { updateJobPostStatus } from "./actions";
+import { useEffect, useState } from "react";
+import { api } from "@/lib/axios";
+import { toast } from "sonner";
 
 type Job = {
+  id: string;
   title: string;
   type: string;
-  remaining: string;
-  status: "Active" | "Expired";
-  applications: number;
+  status: string;
+  remaining: string; // misal: date difference
+  applications: number; // default 0
 };
 
 export default function DashboardRecruiterPage() {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, accessToken } = useAppSelector((state) => state.auth);
 
   const router = useRouter();
   const params = useSearchParams();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab") ?? "overview";
 
+  function formatRemaining(expiryDate?: string | null): string {
+    if (!expiryDate) return "No remaining time";
+
+    const diff = formatDistanceToNow(new Date(expiryDate), {
+      addSuffix: true,
+    });
+
+    return diff;
+  }
+  function mapJobPost(apiJob: any): Job {
+    return {
+      id: apiJob.id,
+      title: apiJob.title,
+      type: apiJob.employment_type,
+      status: apiJob.status,
+      remaining: formatRemaining(apiJob.expiry_date), // nanti kamu format sendiri
+      applications: apiJob.applications, // default, karena API tidak menyediakan
+    };
+  }
   // Ambil tab dari URL, kalau tidak ada default ke "overview"
   const currentTab = params.get("tab") ?? "overview";
 
@@ -50,38 +82,37 @@ export default function DashboardRecruiterPage() {
   };
 
   const userName = user?.name || "User";
+  const [jobs, setJobs] = useState<Job[]>([]);
 
-  const jobs: Job[] = [
-    {
-      title: "UI/UX Designer",
-      type: "Full Time",
-      remaining: "27 days remaining",
-      status: "Active",
-      applications: 798,
-    },
-    {
-      title: "Technical Support Specialist",
-      type: "Full Time",
-      remaining: "4 days remaining",
-      status: "Active",
-      applications: 556,
-    },
-    {
-      title: "Junior Graphic Designer",
-      type: "Part Time",
-      remaining: "24 days remaining",
-      status: "Active",
-      applications: 583,
-    },
-    {
-      title: "Front End Developer",
-      type: "Full Time",
-      remaining: "Dec 7, 2019",
-      status: "Expired",
-      applications: 740,
-    },
-  ];
+  const fetchJobs = async () => {
+    try {
+      const res = await api.get(`/recruiters/job-posts/self`, {
+        headers: {
+          Authorization: accessToken ? `Bearer ${accessToken}` : "",
+        },
+      });
+      const mapped = res?.data.map(mapJobPost);
+      setJobs(mapped);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const updateStatus = async (id: string, status: string) => {
+    const res = await updateJobPostStatus(id, status, accessToken);
+
+    console.log(res);
+    if (!res?.success) {
+      toast.error("Fail to update status");
+      return;
+    }
+
+    fetchJobs();
+  };
   return (
     <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       {/* Header */}
@@ -157,7 +188,7 @@ export default function DashboardRecruiterPage() {
 
         {/* ========== CONTENT AREA (SHARED) ========== */}
         <div className="min-w-0 flex-1">
-          <DashboardContents jobs={jobs} />
+          <DashboardContents jobs={jobs} updateStatus={updateStatus} />
         </div>
       </Tabs>
     </div>
@@ -168,7 +199,19 @@ export default function DashboardRecruiterPage() {
    Shared contents (dipakai untuk semua breakpoint)
    ============================================================ */
 
-function DashboardContents({ jobs }: { jobs: Job[] }) {
+function DashboardContents({
+  jobs,
+  updateStatus,
+}: {
+  jobs: Job[];
+  updateStatus: (id: number, newStatus: string) => Promise<any>;
+}) {
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
+
+  const totalPages = Math.ceil(jobs.length / pageSize);
+
+  const paginatedJobs = jobs.slice((page - 1) * pageSize, page * pageSize);
   return (
     <>
       {/* Overview */}
@@ -201,7 +244,7 @@ function DashboardContents({ jobs }: { jobs: Job[] }) {
             </TableHeader>
 
             <TableBody>
-              {jobs.map((job, i) => (
+              {paginatedJobs.map((job, i) => (
                 <TableRow
                   key={i}
                   className="transition hover:bg-muted/40 dark:hover:bg-muted/20"
@@ -217,17 +260,29 @@ function DashboardContents({ jobs }: { jobs: Job[] }) {
 
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {job.status === "Active" ? (
+                      {job.status === "OPEN" && (
                         <CheckCircle className="h-4 w-4 text-green-500" />
-                      ) : (
+                      )}
+
+                      {job.status === "CLOSED" && (
                         <XCircle className="h-4 w-4 text-red-500" />
                       )}
+
+                      {job.status === "DRAFT" && (
+                        <Notebook className="h-4 w-4 text-amber-500" />
+                      )}
+
                       <span
-                        className={`text-sm ${
-                          job.status === "Active"
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
+                        className={`
+        text-sm font-medium
+        ${
+          job.status === "OPEN"
+            ? "text-green-600"
+            : job.status === "CLOSED"
+            ? "text-red-600"
+            : "text-amber-600"
+        }
+      `}
                       >
                         {job.status}
                       </span>
@@ -252,10 +307,29 @@ function DashboardContents({ jobs }: { jobs: Job[] }) {
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
+
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>Promote Job</DropdownMenuItem>
                           <DropdownMenuItem>View Detail</DropdownMenuItem>
-                          <DropdownMenuItem>Mark as expired</DropdownMenuItem>
+
+                          {/* Conditional action */}
+                          {job.status === "DRAFT" && (
+                            <DropdownMenuItem
+                              onClick={() => updateStatus(job.id, 1)}
+                            >
+                              Publish
+                            </DropdownMenuItem>
+                          )}
+
+                          {job.status === "OPEN" && (
+                            <DropdownMenuItem
+                              onClick={() => updateStatus(job.id, 2)}
+                            >
+                              Mark as expired
+                            </DropdownMenuItem>
+                          )}
+
+                          {/* CLOSED → no action shown */}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -266,6 +340,31 @@ function DashboardContents({ jobs }: { jobs: Job[] }) {
           </Table>
         </div>
       </TabsContent>
+      <div className="flex items-center justify-between mt-4">
+        <p className="text-sm text-muted-foreground">
+          Page {page} of {totalPages}
+        </p>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Previous
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
 
       {/* Post a Job */}
       <TabsContent value="post" className="mt-2">
@@ -289,4 +388,5 @@ function DashboardContents({ jobs }: { jobs: Job[] }) {
       </TabsContent>
     </>
   );
+  // formatDistanceToNow is imported from date-fns above
 }
