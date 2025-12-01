@@ -29,9 +29,9 @@ import { formatDistanceToNow } from "date-fns";
 
 import AppliedJobsClient from "./AppliedJobsClient";
 import RecruiterSettings from "./RecruiterSettings";
-
+import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { updateJobPostStatus } from "./actions";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/axios";
@@ -53,11 +53,12 @@ export default function DashboardRecruiterPage() {
   const params = useSearchParams();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab") ?? "overview";
+  // const job = searchParams.get("success");
 
-  function formatRemaining(expiryDate?: string | null): string {
-    if (!expiryDate) return "No remaining time";
+  function formatRemaining(deadline?: string | null): string {
+    if (!deadline) return "No remaining time";
 
-    const diff = formatDistanceToNow(new Date(expiryDate), {
+    const diff = formatDistanceToNow(new Date(deadline), {
       addSuffix: true,
     });
 
@@ -69,7 +70,7 @@ export default function DashboardRecruiterPage() {
       title: apiJob.title,
       type: apiJob.employment_type,
       status: apiJob.status,
-      remaining: formatRemaining(apiJob.expiry_date), // nanti kamu format sendiri
+      remaining: formatRemaining(apiJob.deadline), // nanti kamu format sendiri
       applications: apiJob.applications, // default, karena API tidak menyediakan
     };
   }
@@ -100,6 +101,9 @@ export default function DashboardRecruiterPage() {
 
   useEffect(() => {
     fetchJobs();
+    // if (job) {
+    //   toast.success("Job Has been created");
+    // }
   }, []);
 
   const updateStatus = async (id: string, status: string) => {
@@ -339,32 +343,33 @@ function DashboardContents({
             </TableBody>
           </Table>
         </div>
-      </TabsContent>
-      <div className="flex items-center justify-between mt-4">
-        <p className="text-sm text-muted-foreground">
-          Page {page} of {totalPages}
-        </p>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            Previous
-          </Button>
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </p>
 
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          >
-            Next
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Previous
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next
+            </Button>
+          </div>
         </div>
-      </div>
+      </TabsContent>
 
       {/* Post a Job */}
       <TabsContent value="post" className="mt-2">

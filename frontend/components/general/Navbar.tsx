@@ -80,7 +80,7 @@ export default function Navbar({
   if (session?.role === "recruiter") {
     items = [
       { href: "/dashboard-recruiters", label: "Dashboard" },
-      { href: "/jobs", label: "My Jobs" },
+      // { href: "/jobs", label: "My Jobs" },
     ];
   }
 

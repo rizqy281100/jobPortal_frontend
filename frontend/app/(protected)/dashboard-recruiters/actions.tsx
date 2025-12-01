@@ -7,14 +7,13 @@ import { redirect } from "next/navigation";
 export async function createJobPost(formData: FormData) {
   try {
     const accessToken = formData.get("accessToken")?.toString();
-    console.log("Access Token:", accessToken);
     const payload = {
       title: formData.get("title"),
       description: formData.get("description"),
       location: `${formData.get("city")}, ${formData.get("country")}`,
       employment_type_id: Number(formData.get("employment_type_id")),
       experience_level_id: Number(formData.get("experience_level_id")),
-      salary_type_id: Number(formData.get("salary_type_id") || 1),
+      salary_type_id: Number(formData.get("salary_type_id") || 3),
       salary_min: Number(formData.get("minSalary")),
       salary_max: Number(formData.get("maxSalary")),
       currency_id: formData.get("currency"),
@@ -25,20 +24,34 @@ export async function createJobPost(formData: FormData) {
     };
 
     console.log("Submitting Payload:", payload);
-
+    console.log(payload);
     const res = await api.post("/job-posts", payload, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         withCredentials: true,
       },
     });
-    if (res?.code === 200) {
-      redirect("/dashboard-recruiters?tab=overview");
+    console.log(res);
+    if (!res?.success) {
+      return;
     }
-    // return {
-    //   success: true,
-    //   data: res.data,
-    // };
+
+    const { tags } = payload;
+    tags.map(async (t) => {
+      const resTags = await api.post(`/tags/${res?.data.id}`, t, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          withCredentials: true,
+        },
+      });
+
+      if (resTags?.success) return;
+    });
+
+    return {
+      success: true,
+      data: res.data,
+    };
   } catch (err: any) {
     console.error("Job post error:", err?.response?.data || err);
     return {

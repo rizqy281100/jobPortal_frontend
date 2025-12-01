@@ -19,6 +19,8 @@ import { SearchableSelect } from "@/components/SearchableSelect"; // sesuaikan p
 import type { Option } from "@/components/SearchableSelect";
 import { api } from "@/lib/axios";
 import { useAppSelector } from "@/store/hooks";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 type AppliedItem = {
   id: string;
@@ -33,8 +35,8 @@ type AppliedItem = {
   href?: string;
 };
 
-const LS_KEY = "appliedJobs";
-const PAGE_SIZE = 8;
+// const LS_KEY = "appliedJobs";
+// const PAGE_SIZE = 8;
 
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -48,6 +50,7 @@ function fmtDate(iso: string) {
 }
 
 export default function PostJobForm() {
+  const router = useRouter();
   const [deadline, setDeadline] = useState("");
   const [currency, setCurrency] = useState("148");
   const [query, setQuery] = useState("a"); // ← default UZS
@@ -108,13 +111,26 @@ export default function PostJobForm() {
     return () => clearTimeout(timeout);
   }, [query]);
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.currentTarget);
+
+    // Kalau mau debug dulu:
+    // console.log(Object.fromEntries(formData));
+
+    const res = await createJobPost(formData);
+
+    if (res?.success) {
+      toast.success("Job Post Created");
+      router.push("/dashboard-recruiters?tab=overview&success=true");
+    } else {
+      toast.error(res?.message);
+    }
+  };
+
   return (
-    <form
-      action={async (formData) => {
-        await createJobPost(formData);
-      }}
-      className="space-y-6"
-    >
+    <form onSubmit={handleSubmit} className="space-y-6">
       <input type="hidden" name="accessToken" value={accessToken || ""} />
       <input
         type="hidden"

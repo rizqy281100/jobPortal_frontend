@@ -101,6 +101,14 @@ export async function middleware(request: NextRequest) {
   // 🔥 SESSION RESTORE END
   // =============================
 
+  if (pathname.startsWith("/jobs")) {
+    return NextResponse.next();
+  }
+
+  if (publicRoutes.includes(pathname)) {
+    return NextResponse.next();
+  }
+  
   // =============================
   // 1. Cegah akses login/register umum jika SUDAH login
   // =============================
