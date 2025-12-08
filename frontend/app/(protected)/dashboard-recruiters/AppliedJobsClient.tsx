@@ -212,8 +212,8 @@ export default function PostJobForm() {
         className="
   space-y-4
   sm:space-y-0
-  sm:grid sm:grid-cols-3 sm:gap-4
-  md:grid-cols-3
+  sm:grid sm:grid-cols-2 sm:gap-4
+  md:grid-cols-4
 "
       >
         <h3 className="font-semibold text-base col-span-3">
@@ -221,7 +221,7 @@ export default function PostJobForm() {
         </h3>
 
         {/* Education */}
-        <div className="">
+        <div className="col-span-2">
           <Label>Education</Label>
           <Select>
             <SelectTrigger className="mt-1 w-full">
@@ -237,25 +237,8 @@ export default function PostJobForm() {
           </Select>
         </div>
 
-        {/* Experience */}
-        <div className="col-span-1">
-          <Label>Experience</Label>
-          <Select>
-            <SelectTrigger className="mt-1 w-full">
-              <SelectValue placeholder="Select..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="0">No Experience</SelectItem>
-              <SelectItem value="1">1+ Year</SelectItem>
-              <SelectItem value="2">2+ Years</SelectItem>
-              <SelectItem value="3">3+ Years</SelectItem>
-              <SelectItem value="5">5+ Years</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Job Type */}
-        <div className="col-span-1">
+        <div className="col-span-2">
           <Label>Job Type</Label>
           <Select name="employment_type_id">
             <SelectTrigger className="mt-1 w-full">
@@ -272,7 +255,7 @@ export default function PostJobForm() {
         </div>
 
         {/* Job Level (optional if needed) */}
-        <div className="col-span-1">
+        <div className="col-span-2">
           <Label>Job Level</Label>
           <Select name="experience_level_id">
             <SelectTrigger className="mt-1 w-full">
@@ -288,7 +271,7 @@ export default function PostJobForm() {
         </div>
 
         {/* Expiration Date */}
-        <div className="col-span-1">
+        <div className="col-span-2">
           <Label htmlFor="expiration">Expiration Date</Label>
           <Input
             id="expiration"
