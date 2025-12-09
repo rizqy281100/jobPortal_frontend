@@ -1,6 +1,251 @@
 {
+  "Navbar": {
+    "home": "Home",
+    "jobs": "Jobs",
+    "about": "About",
+    "insights": "Insights",
+    "dashboard": "Dashboard",
+    "login": "Log in",
+    "recruiter": "Recruiter",
+    "postJob": "Post a Job",
+    "logout": "Logout",
+    "hi": "Hi",
+    "hello": "Hello"
+  },
+  "AuthLogin": {
+    "title": "Sign in to JobPortal",
+    "subtitle": "Use your account to manage applications and jobs.",
+    "emailOrUsernameLabel": "Email or Username",
+    "emailOrUsernamePlaceholder": "name@example.com",
+    "passwordLabel": "Password",
+    "forgotPassword": "Forgot password?",
+    "buttonIdle": "Sign in",
+    "buttonLoading": "Signing in...",
+    "orContinueWith": "Or continue with",
+    "github": "GitHub",
+    "tosPrefix": "By continuing, you agree to our",
+    "tosTerms": "Terms",
+    "tosPrivacy": "Privacy Policy",
+    "tosAnd": "and",
+    "noAccount": "Don't have an account?",
+    "createAccount": "Create account",
+    "registerSuccess": "Registration successful!",
+    "toastSuccess": "Login successful",
+    "toastFailed": "Login failed",
+    "toastError": "Something went wrong"
+  },
+  "AuthRegister": {
+    "title": "Create an account",
+    "subtitle": "Register to start finding your next job opportunity.",
+    "firstNameLabel": "First name",
+    "lastNameLabel": "Last name",
+    "usernameLabel": "Username",
+    "emailLabel": "Email address",
+    "passwordLabel": "Password",
+    "firstNamePlaceholder": "Tyler",
+    "lastNamePlaceholder": "Durden",
+    "usernamePlaceholder": "TylerDurden",
+    "emailPlaceholder": "projectmayhem@fc.com",
+    "buttonSubmit": "Sign up",
+    "github": "Sign up with GitHub",
+    "google": "Sign up with Google",
+    "successRedirect": "Registration successful! Redirecting...",
+    "errorGeneric": "Registration failed"
+  },
+  "AuthReset": {
+    "title": "Reset your password",
+    "subtitle": "Enter the email you used to sign up and we’ll send you a reset link. This is a demo flow.",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "name@example.com",
+    "submit": "Send reset link",
+    "backHint": "Remember your password?",
+    "backToLogin": "Back to login",
+    "errors": {
+      "required": "Email is required",
+      "notFound": "Email not found"
+    }
+  },
+  "Hero": {
+    "title": "Find jobs in Uzbekistan",
+    "subtitle": "Search thousands of vacancies from verified companies. Simple, fast, and free.",
+    "placeholders": [
+      "Find the best jobs in Uzbekistan",
+      "Software Engineer",
+      "UI/UX Designer",
+      "Copywriter",
+      "Data Analyst"
+    ]
+  },
+  "Features": {
+    "built": {
+      "title": "Built for Job Seekers and Employers",
+      "description": "Designed to connect talent and opportunity seamlessly. Whether you’re hiring or job hunting — we’ve got you covered."
+    },
+    "search": {
+      "title": "Fast & Effortless Search",
+      "description": "Powerful filters and smart recommendations make discovery instant."
+    },
+    "support": {
+      "title": "24/7 Customer Support",
+      "description": "Real humans, real help — anytime you need it. We’re always here to assist, guide, and support your journey."
+    },
+    "growth": {
+      "title": "Career Growth Made Simple",
+      "description": "Track applications, build your resume, and level up your career. Everything you need to grow — in one place."
+    }
+  },
+  "CTA": {
+    "titleLine1": "Stand out to leading recruiters",
+    "titleLine2": "nationwide",
+    "description": "Compete in the biggest skill contest and get noticed by top companies. Win prizes and unlock exclusive opportunities.",
+    "button": "Tell me more"
+  },
+
   "About": {
     "title": "Who We Are",
     "subtitle": "Search thousands of vacancies from verified companies. Simple, fast, and free."
+  },
+  "Help": {
+    "title": "Help",
+    "searchPlaceholder": "Keyword or question",
+    "tabs": {
+      "jobSeekers": "Job seekers",
+      "employers": "Employers"
+    },
+    "popular": {
+      "title": "Most popular",
+      "items": {
+        "noPersonalInfo": "Is it possible to not enter my personal information or phone number? Or hide it?",
+        "jobTitle": "How to correctly indicate your job title in a resume?",
+        "photo": "What photo should I add to my resume?",
+        "verifiedCompany": "What does \"Company Authenticity Verified\" mean?",
+        "applyWithoutResume": "What does the \"Apply without a resume\" icon mean? How do I apply without a resume?",
+        "noCalls": "I don't want to be called. What can I do?",
+        "deleteData": "I want to completely delete all my data from the service.",
+        "cantLogin": "I can't log into my account. What should I do?",
+        "hideResume": "How do I delete or hide my resume?"
+      },
+      "answerPlaceholder": "Short answer or step-by-step instructions will appear here soon."
+    },
+    "categories": {
+      "jobSearch": { "title": "Job Search" },
+      "myResume": { "title": "My resume" },
+      "createResume": { "title": "Creating and editing a resume" },
+      "response": { "title": "Response to vacancy" },
+      "auth": { "title": "Registration and login" },
+      "newJobs": { "title": "New job postings" },
+      "answerPlaceholder": "Open this section to read detailed articles related to this topic."
+    },
+    "employers": {
+      "placeholder": "Help articles for employers will appear here. You can reuse the same structure for hiring topics."
+    },
+    "sidebar": {
+      "cantFindTitle": "Couldn't find an answer?",
+      "cantFindBody": "Describe your issue to our support team and we’ll try to help as quickly as possible.",
+      "contactSupport": "Ask our support team",
+      "lookingForJobTitle": "Looking for a job?",
+      "lookingForJobBody": "Read our step-by-step guide on how to search and apply for vacancies effectively.",
+      "jobGuide": "Read our job search guide"
+    }
+  },
+  "Contact": {
+    "title": "Contact us",
+
+    "phone": {
+      "title": "Phone number",
+      "items": {
+        "tashkent": { "label": "Tashkent", "number": "+998 71 000-00-00" },
+        "samarkand": { "label": "Samarkand", "number": "+998 66 000-00-00" },
+        "bukhara": { "label": "Bukhara", "number": "+998 65 000-00-00" },
+        "namangan": { "label": "Namangan", "number": "+998 69 000-00-00" },
+        "andijan": { "label": "Andijan", "number": "+998 74 000-00-00" },
+        "fergana": { "label": "Fergana", "number": "+998 73 000-00-00" }
+      }
+    },
+
+    "email": {
+      "title": "Email",
+      "support": "Support team",
+      "supportAddress": "support@example.com",
+      "employers": "Services for employers",
+      "employersAddress": "sales@example.com",
+      "partners": "Partner with us",
+      "partnersAddress": "partnership@example.com",
+      "press": "Press service",
+      "pressAddress": "press@example.com"
+    },
+
+    "form": {
+      "title": "Comments or questions",
+      "description": {
+        "start": "You can contact us or ask us questions using the form below.",
+        "helpLink": "Help",
+        "end": "before you submit your question, you may find the answer there."
+      },
+      "fields": {
+        "name": {
+          "label": "Your name",
+          "placeholder": "Enter your name"
+        },
+        "contact": {
+          "label": "Your email address or phone number",
+          "placeholder": "you@example.com or +998..."
+        },
+        "message": {
+          "label": "Message",
+          "placeholder": "Write your question or comment here..."
+        }
+      },
+      "submit": "Send message"
+    }
+  },
+  "Privacy": {
+    "title": "Terms and Privacy Policy",
+    "intro": "These rules describe how you may use JobPortal and how we protect your data. By using the website you agree to follow the terms below.",
+    "userResponsibilities": {
+      "heading": "1. User responsibilities",
+      "description": "When you create an account or publish content on JobPortal, you agree to use the Service fairly and respectfully.",
+      "items": {
+        "1": "Provide accurate and up-to-date information in your profile, vacancies and messages.",
+        "2": "Do not mislead other users, publish fake jobs or send spam.",
+        "3": "Do not upload illegal, offensive, discriminatory or explicit content.",
+        "4": "Use the Service only for job search, hiring and related career purposes."
+      }
+    },
+    "limitations": {
+      "heading": "2. Limitation of responsibility",
+      "description": "JobPortal is a platform that connects candidates and employers. We cannot fully control the behaviour or content of all users.",
+      "items": {
+        "1": "We are not responsible for the accuracy of vacancies, resumes or other information posted by users.",
+        "2": "We are not liable for any losses, missed opportunities or disputes that may arise between users.",
+        "3": "We do not guarantee that the Service will always work without interruptions or errors, although we try to keep it stable."
+      }
+    },
+    "companyRights": {
+      "heading": "3. Rights of the Company",
+      "description": "To keep the platform safe and useful, JobPortal reserves several important rights.",
+      "items": {
+        "1": "Moderate, hide or delete content that violates these rules or applicable law.",
+        "2": "Temporarily or permanently block accounts that abuse the Service.",
+        "3": "Update the functionality, design or rules of the Service at any time.",
+        "4": "Use anonymised, aggregated data to improve JobPortal and its analytics."
+      }
+    },
+    "privacy": {
+      "heading": "4. Privacy and personal data",
+      "description": "We treat your personal data carefully and process it only for clear, legitimate purposes.",
+      "items": {
+        "1": "We collect data that you provide directly (such as profile details, CV, vacancies and messages) and technical data needed to run the Service.",
+        "2": "We use this data to operate JobPortal, show relevant jobs or candidates, prevent fraud and improve the product.",
+        "3": "We may share data with trusted providers (for example hosting, analytics or communication tools) under data-protection agreements.",
+        "4": "You may request access, correction or deletion of your personal data as allowed by the laws of your country."
+      }
+    }
+  },
+  "Footer": {
+    "help": "Help",
+    "terms": "Terms",
+    "privacy": "Privacy Policy",
+    "contact": "Contact Us"
   }
 }

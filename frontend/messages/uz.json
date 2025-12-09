@@ -1,0 +1,250 @@
+{
+  "Navbar": {
+    "home": "Bosh sahifa",
+    "jobs": "Ishlar",
+    "about": "Biz haqimizda",
+    "insights": "Maqolalar",
+    "dashboard": "Kabinet",
+    "login": "Kirish",
+    "recruiter": "Ish beruvchilar",
+    "postJob": "Vakansiya joylash",
+    "logout": "Chiqish",
+    "hi": "Salom",
+    "hello": "Assalomu alaykum"
+  },
+  "AuthLogin": {
+    "title": "JobPortal hisobingizga kiring",
+    "subtitle": "Arizalar va ish eʼlonlarini boshqarish uchun profilingizdan foydalaning.",
+    "emailOrUsernameLabel": "Email yoki login",
+    "emailOrUsernamePlaceholder": "name@example.com",
+    "passwordLabel": "Parol",
+    "forgotPassword": "Parolni unutdingizmi?",
+    "buttonIdle": "Kirish",
+    "buttonLoading": "Kirilmoqda...",
+    "orContinueWith": "Yoki quyidagilar orqali davom eting",
+    "github": "GitHub",
+    "tosPrefix": "Davom etsangiz, siz bizning",
+    "tosTerms": "Foydalanish shartlari",
+    "tosPrivacy": "Maxfiylik siyosati",
+    "tosAnd": "va",
+    "noAccount": "Hisobingiz yo‘qmi?",
+    "createAccount": "Yangi hisob ochish",
+    "registerSuccess": "Ro‘yxatdan o‘tish muvaffaqiyatli yakunlandi!",
+    "toastSuccess": "Muvaffaqiyatli kirdingiz",
+    "toastFailed": "Kirish amalga oshmadi",
+    "toastError": "Nomaʼlum xatolik yuz berdi"
+  },
+  "AuthRegister": {
+    "title": "Yangi hisob ochish",
+    "subtitle": "Yangi ish imkoniyatlarini topish uchun ro‘yxatdan o‘ting.",
+    "firstNameLabel": "Ism",
+    "lastNameLabel": "Familiya",
+    "usernameLabel": "Login",
+    "emailLabel": "Email manzil",
+    "passwordLabel": "Parol",
+    "firstNamePlaceholder": "Ali",
+    "lastNamePlaceholder": "Valiyev",
+    "usernamePlaceholder": "ali_valiyev",
+    "emailPlaceholder": "example@mail.com",
+    "buttonSubmit": "Ro‘yxatdan o‘tish",
+    "github": "GitHub orqali ro‘yxatdan o‘tish",
+    "google": "Google orqali ro‘yxatdan o‘tish",
+    "successRedirect": "Ro‘yxatdan o‘tish muvaffaqiyatli! Sahifa o‘zgartirilmoqda...",
+    "errorGeneric": "Ro‘yxatdan o‘tish amalga oshmadi"
+  },
+  "AuthReset": {
+    "title": "Parolni tiklash",
+    "subtitle": "Ro‘yxatdan o‘tganda ishlatgan emailingizni kiriting. Sizga parolni tiklash havolasini yuboramiz. Bu demo jarayon.",
+    "emailLabel": "Email manzil",
+    "emailPlaceholder": "name@example.com",
+    "submit": "Tiklash havolasini yuborish",
+    "backHint": "Parolni eslab qoldingizmi?",
+    "backToLogin": "Kirish sahifasiga qaytish",
+    "errors": {
+      "required": "Emailni kiritish shart",
+      "notFound": "Bunday email bilan foydalanuvchi topilmadi"
+    }
+  },
+  "Hero": {
+    "title": "Oʻzbekistonda ish toping",
+    "subtitle": "Tasdiqlangan kompaniyalardan minglab bo'sh ish o'rinlarini qidiring. Oddiy, tez va bepul.",
+    "placeholders": [
+      "Eng yaxshi ishlarni toping Oʻzbekistonda",
+      "Dasturiy ta'minot muhandisi",
+      "UI/UX dizayner",
+      "Kopirayter",
+      "Maʼlumotlar tahlilchisi"
+    ]
+  },
+  "Features": {
+    "built": {
+      "title": "Nomzodlar va ish beruvchilar uchun",
+      "description": "Iqtidor va imkoniyatni birlashtirish uchun yaratilgan. Ish qidiryapsizmi yoki xodim izlayapsizmi — hammasi shu yerda."
+    },
+    "search": {
+      "title": "Tez va qulay qidiruv",
+      "description": "Kuchli filtrlar va aqlli tavsiyalar orqali mos ishni tezda toping."
+    },
+    "support": {
+      "title": "24/7 qoʻllab-quvvatlash",
+      "description": "Haqiqiy odamlar, haqiqiy yordam — istalgan vaqtda. Sizni yoʻlda yolgʻiz qoldirmaymiz."
+    },
+    "growth": {
+      "title": "Karyera o‘sishi osonroq",
+      "description": "Arizalaringizni kuzating, rezyumeni yaxshilang va karyerangizni rivojlantiring — barchasi bitta platformada."
+    }
+  },
+  "CTA": {
+    "titleLine1": "Eng yaxshi rekruterlar e’tiboriga tushing",
+    "titleLine2": "butun Oʻzbekiston boʻylab",
+    "description": "Ko‘nikmalar tanlovlarida qatnashing va yetakchi kompaniyalar e’tiboriga tushiring. Sovrinlar va maxsus imkoniyatlarga ega bo‘ling.",
+    "button": "Batafsil maʼlumot"
+  },
+  "About": {
+    "title": "Biz kimmiz",
+    "subtitle": "Tasdiqlangan kompaniyalardan minglab bo‘sh ish o‘rinlarini qidiring. Oson, tez va bepul."
+  },
+  "Help": {
+    "title": "Yordam",
+    "searchPlaceholder": "Kalit so‘z yoki savol",
+    "tabs": {
+      "jobSeekers": "Ish izlayotganlar",
+      "employers": "Ish beruvchilar"
+    },
+    "popular": {
+      "title": "Eng ko‘p so‘raladiganlar",
+      "items": {
+        "noPersonalInfo": "Shaxsiy ma’lumotlarimni yoki telefon raqamimni kiritmasam bo‘ladimi? Yoki ularni yashirish mumkinmi?",
+        "jobTitle": "Rezyumeda lavozimni to‘g‘ri qanday yozsam bo‘ladi?",
+        "photo": "Rezyumega qaysi turdagi surat qo‘shish kerak?",
+        "verifiedCompany": "“Tasdiqlangan kompaniya” belgisi nimani anglatadi?",
+        "applyWithoutResume": "“Rezyumesiz ariza berish” belgisi nimani anglatadi? Rezyumesiz qanday ariza beraman?",
+        "noCalls": "Menga qo‘ng‘iroq qilishlarini xohlamayman. Nima qilay?",
+        "deleteData": "Xizmatdan barcha ma’lumotlarimni butunlay o‘chirib tashlamoqchiman.",
+        "cantLogin": "Accountimga kira olmayapman. Nima qilishim kerak?",
+        "hideResume": "Rezyumeni qanday o‘chiraman yoki yashiraman?"
+      },
+      "answerPlaceholder": "Qisqa javob yoki bosqichma-bosqich ko‘rsatma tez orada shu yerda paydo bo‘ladi."
+    },
+    "categories": {
+      "jobSearch": { "title": "Ish qidirish" },
+      "myResume": { "title": "Mening rezyumem" },
+      "createResume": { "title": "Rezyume yaratish va tahrirlash" },
+      "response": { "title": "Vakansiyaga javob berish" },
+      "auth": { "title": "Ro‘yxatdan o‘tish va kirish" },
+      "newJobs": { "title": "Yangi ish e’lonlari" },
+      "answerPlaceholder": "Ushbu bo‘limni ochib, mazkur mavzuga oid batafsil maqolalarni ko‘rishingiz mumkin."
+    },
+    "employers": {
+      "placeholder": "Bu bo‘limda ish beruvchilar uchun qo‘llanmalar va tez-tez so‘raladigan savollarga javoblarni joylashtirishingiz mumkin."
+    },
+    "sidebar": {
+      "cantFindTitle": "Savolingizga javob topilmadimi?",
+      "cantFindBody": "Muammoni qisqacha yozing, qo‘llab-quvvatlash jamoamiz sizga imkon qadar tez yordam beradi.",
+      "contactSupport": "Qo‘llab-quvvatlash xizmatiga yozish",
+      "lookingForJobTitle": "Ish qidirmoqdamisiz?",
+      "lookingForJobBody": "Vakansiyalarni samarali topish va ularga ariza berish bo‘yicha qo‘llanmamizni o‘qing.",
+      "jobGuide": "Ish qidirish bo‘yicha qo‘llanmani o‘qish"
+    }
+  },
+  "Contact": {
+    "title": "Biz bilan bog‘laning",
+
+    "phone": {
+      "title": "Telefon raqamlari",
+      "items": {
+        "tashkent": { "label": "Toshkent", "number": "+998 71 000-00-00" },
+        "samarkand": { "label": "Samarqand", "number": "+998 66 000-00-00" },
+        "bukhara": { "label": "Buxoro", "number": "+998 65 000-00-00" },
+        "namangan": { "label": "Namangan", "number": "+998 69 000-00-00" },
+        "andijan": { "label": "Andijon", "number": "+998 74 000-00-00" },
+        "fergana": { "label": "Farg‘ona", "number": "+998 73 000-00-00" }
+      }
+    },
+
+    "email": {
+      "title": "Email",
+      "support": "Qo‘llab-quvvatlash xizmati",
+      "supportAddress": "support@example.com",
+      "employers": "Ish beruvchilar uchun xizmat",
+      "employersAddress": "sales@example.com",
+      "partners": "Hamkor bo‘ling",
+      "partnersAddress": "partnership@example.com",
+      "press": "Matbuot xizmati",
+      "pressAddress": "press@example.com"
+    },
+
+    "form": {
+      "title": "Izohlar yoki savollar",
+      "description": {
+        "start": "Quyidagi forma orqali biz bilan bog‘lanishingiz yoki savol berishingiz mumkin.",
+        "helpLink": "Help",
+        "end": "savolingizni yuborishdan oldin, ehtimol javobni o‘sha yerda topishingiz mumkin."
+      },
+      "fields": {
+        "name": {
+          "label": "Ismingiz",
+          "placeholder": "Ismingizni kiriting"
+        },
+        "contact": {
+          "label": "Email manzilingiz yoki telefon raqamingiz",
+          "placeholder": "you@example.com yoki +998..."
+        },
+        "message": {
+          "label": "Xabar",
+          "placeholder": "Savolingiz yoki fikringizni shu yerga yozing..."
+        }
+      },
+      "submit": "Xabarni yuborish"
+    }
+  },
+  "Privacy": {
+    "title": "Foydalanish qoidalari va maxfiylik siyosati",
+    "intro": "Ushbu bo‘limda JobPortal xizmatidan qanday shartlarda foydalanishingiz va shaxsiy ma’lumotlaringiz qanday qayta ishlanishi qisqacha tushuntiriladi. Saytdan foydalanish orqali siz ushbu qoidalarga rozilik bildirasiz.",
+    "userResponsibilities": {
+      "heading": "1. Foydalanuvchining majburiyatlari",
+      "description": "JobPortal’da akkaunt yaratib yoki ma’lumot joylashtirib, siz xizmatdan halol va hurmat bilan foydalanishga rozilik bildirasiz.",
+      "items": {
+        "1": "Profil, rezyume, vakansiyalar va xabarlarda to‘g‘ri va yangilangan ma’lumotlarni ko‘rsatish.",
+        "2": "Boshqa foydalanuvchilarni chalg‘itmaslik, soxta vakansiyalar bermaslik va spam yubormaslik.",
+        "3": "Qonunga zid, haqoratli, kamsituvchi yoki ochiq-oydin kontent joylashtirmaslik.",
+        "4": "Xizmatdan faqat ish qidirish, xodim izlash va kareraga oid maqsadlar uchun foydalanish."
+      }
+    },
+    "limitations": {
+      "heading": "2. Mas’uliyatni cheklash",
+      "description": "JobPortal — bu ish qidiruvchilar va ish beruvchilarni bog‘laydigan platformadir. Biz barcha foydalanuvchilarning xatti-harakati va kontentini to‘liq nazorat qila olmaymiz.",
+      "items": {
+        "1": "Foydalanuvchilar tomonidan joylashtirilgan e’lonlar, rezyumelar va boshqa ma’lumotlarning aniqligi uchun javobgar emasmiz.",
+        "2": "Foydalanuvchilar o‘rtasida yuzaga keladigan zarar, yo‘qotish yoki nizolar uchun javobgar emasmiz.",
+        "3": "Xizmatning uzluksiz va xatosiz ishlashini kafolatlay olmaymiz, biroq uni barqaror ushlab turishga harakat qilamiz."
+      }
+    },
+    "companyRights": {
+      "heading": "3. Kompaniyaning huquqlari",
+      "description": "Platforma xavfsiz va foydali bo‘lib qolishi uchun JobPortal bir qator huquqlarga ega.",
+      "items": {
+        "1": "Qoidalarga yoki qonunga zid bo‘lgan kontentni moderatsiya qilish, yashirish yoki o‘chirish.",
+        "2": "Xizmatdan suiiste’mol qiladigan akkauntlarni vaqtincha yoki butunlay bloklash.",
+        "3": "Xizmat funksionalligi, dizayni va foydalanish shartlarini istalgan vaqtda o‘zgartirish.",
+        "4": "JobPortal va tahlillarni yaxshilash uchun shaxsdan xoli, umumlashtirilgan ma’lumotlardan foydalanish."
+      }
+    },
+    "privacy": {
+      "heading": "4. Maxfiylik va shaxsiy ma’lumotlar",
+      "description": "Biz shaxsiy ma’lumotlaringizga ehtiyotkorlik bilan munosabatda bo‘lamiz va ularni faqat aniq va qonuniy maqsadlarda qayta ishlaymiz.",
+      "items": {
+        "1": "Biz siz kiritgan ma’lumotlarni (profil, rezyume, vakansiya va xabarlar) hamda xizmat ishlashi uchun zarur texnik ma’lumotlarni yig‘amiz.",
+        "2": "Bu ma’lumotlardan JobPortal’ni ishga tushirish, mos ish yoki nomzodlarni ko‘rsatish, firibgarlikni oldini olish va mahsulotni yaxshilash uchun foydalanamiz.",
+        "3": "Ma’lumotlarni ishonchli texnik hamkorlarga (xosting, analitika, aloqa servislar) ma’lumotlarni himoya qilish bo‘yicha kelishuvlar asosida berishimiz mumkin.",
+        "4": "O‘zingiz haqingizdagi shaxsiy ma’lumotlarga kirish, ularni tuzatish yoki o‘chirishni o‘z mamlakatingiz qonunchiligiga muvofiq so‘rashingiz mumkin."
+      }
+    }
+  },
+  "Footer": {
+    "help": "Yordam",
+    "terms": "Foydalanish shartlari",
+    "privacy": "Maxfiylik siyosati",
+    "contact": "Biz bilan bog‘laning"
+  }
+}
