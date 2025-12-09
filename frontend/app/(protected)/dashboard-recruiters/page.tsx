@@ -36,6 +36,7 @@ import { updateJobPostStatus } from "./actions";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/axios";
 import { toast } from "sonner";
+import { metadata } from "@/app/layout";
 
 type Job = {
   id: string;
@@ -62,7 +63,7 @@ export default function DashboardRecruiterPage() {
       addSuffix: true,
     });
 
-    return diff;
+    return "expire " + diff;
   }
   function mapJobPost(apiJob: any): Job {
     return {
@@ -84,6 +85,7 @@ export default function DashboardRecruiterPage() {
 
   const userName = user?.name || "User";
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [meta, setMeta] = useState([]);
 
   const fetchJobs = async () => {
     try {
@@ -92,8 +94,10 @@ export default function DashboardRecruiterPage() {
           Authorization: accessToken ? `Bearer ${accessToken}` : "",
         },
       });
+      console.log(res);
       const mapped = res?.data.map(mapJobPost);
       setJobs(mapped);
+      setMeta(res?.meta);
     } catch (err) {
       console.error(err);
     }
@@ -192,7 +196,11 @@ export default function DashboardRecruiterPage() {
 
         {/* ========== CONTENT AREA (SHARED) ========== */}
         <div className="min-w-0 flex-1">
-          <DashboardContents jobs={jobs} updateStatus={updateStatus} />
+          <DashboardContents
+            jobs={jobs}
+            updateStatus={updateStatus}
+            meta={meta}
+          />
         </div>
       </Tabs>
     </div>
@@ -206,9 +214,11 @@ export default function DashboardRecruiterPage() {
 function DashboardContents({
   jobs,
   updateStatus,
+  meta,
 }: {
   jobs: Job[];
   updateStatus: (id: number, newStatus: string) => Promise<any>;
+  meta: [];
 }) {
   const [page, setPage] = useState(1);
   const pageSize = 5;
@@ -228,8 +238,8 @@ function DashboardContents({
 
           <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
             <div className="rounded-lg border p-4 text-center">
-              <p className="text-2xl font-bold">3</p>
-              <p className="text-sm text-muted-foreground">Open Jobs</p>
+              <p className="text-2xl font-bold">{meta?.total}</p>
+              <p className="text-sm text-muted-foreground">Jobs</p>
             </div>
             <div className="rounded-lg border p-4 text-center">
               <p className="text-2xl font-bold">5</p>
