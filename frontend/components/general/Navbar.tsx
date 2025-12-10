@@ -63,11 +63,20 @@ function NavLink({
   href: string;
   makeHref: (href: string) => string;
 }>) {
+  const locale = useLocale();
+
   const pathname = usePathname();
   const target = makeHref(href);
 
-  const active = pathname === target || pathname?.startsWith(target + "/");
+  console.log("pathname :" + pathname);
+  console.log("target :" + target);
 
+  const active =
+    target === `/${locale}`
+      ? pathname === target // untuk home harus EXACT
+      : pathname === target || pathname.startsWith(target + "/");
+
+  console.log("active :" + active);
   return (
     <Button
       asChild

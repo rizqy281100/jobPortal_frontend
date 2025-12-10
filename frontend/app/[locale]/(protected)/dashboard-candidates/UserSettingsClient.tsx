@@ -1409,7 +1409,7 @@ export default function UserSettingsClient() {
           <section className="w-full rounded-2xl border bg-card/80 p-4 sm:p-6 md:p-8 space-y-8">
             {/* Work Experience */}
 
-            <div className="mb-6 space-y-3 rounded-xl border p-4">
+            <div className="mb-6 space-y-3 rounded-xl p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h4 className="text-lg font-semibold">Work Experience</h4>
                 <button
@@ -1504,7 +1504,7 @@ export default function UserSettingsClient() {
             </div>
 
             {/* Education */}
-            <div className="space-y-3 rounded-xl border p-4">
+            <div className="space-y-3 rounded-xl p-4">
               <div className="mb-1 flex items-center justify-between">
                 <h4 className="text-lg font-semibold">Education</h4>
                 <button
@@ -1606,7 +1606,7 @@ export default function UserSettingsClient() {
             </div>
 
             {/* Certifications */}
-            <div className="mt-8 space-y-3 rounded-xl border p-4">
+            <div className="mt-8 space-y-3 rounded-xl p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h4 className="text-lg font-semibold">Certifications</h4>
 

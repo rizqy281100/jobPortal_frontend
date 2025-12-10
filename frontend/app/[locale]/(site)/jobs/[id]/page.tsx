@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/select";
 import { Calendar, Timer, Layers, Map } from "lucide-react";
 import { toast } from "sonner";
+import { makeHref } from "@/lib/locale";
+import { useLocale } from "next-intl";
 
 const UPLOAD_LOCATION = process.env.NEXT_PUBLIC_UPLOAD;
 
@@ -69,11 +71,18 @@ export default function JobPostPage({ params }) {
     fetchResumes();
     fetchJob();
   }, [id, user, accessToken]);
-
+  const locale = useLocale();
   // HANDLE APPLY
   const handleApply = () => {
     if (!user) {
-      router.push(`/login?redirect=${encodeURIComponent(`/jobs/${id}`)}`);
+      router.push(
+        makeHref(
+          locale,
+          `/login?redirect=${encodeURIComponent(
+            makeHref(locale, `/jobs/${id}`)
+          )}`
+        )
+      );
       return;
     }
 

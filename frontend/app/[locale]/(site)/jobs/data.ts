@@ -18,6 +18,7 @@ export type Job = {
   created_at: string;
   updated_at: string;
   policy: string;
+  tags: [];
   colorKeys?: { type: string; policy: string; exp: string };
 };
 

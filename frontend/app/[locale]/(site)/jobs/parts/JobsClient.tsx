@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Banknote,
   MapPin,
@@ -30,31 +30,37 @@ import {
 } from "@/components/ui/accordion";
 
 import type { Job } from "../data";
-type JobType = Job["type"];
+type JobType = Job["employment_type"];
 type Policy = Job["policy"];
-type Experience = Job["exp"];
-
+type Experience = Job["experience_level"];
+import { api } from "@/lib/axios";
+import { formatDistanceToNow } from "date-fns";
+import { useAppSelector } from "@/store/hooks";
+import { useEffect, useRef, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { makeHref } from "@/lib/locale";
+import { useLocale } from "next-intl";
 /* ================= Colors ================= */
 const COLOR = {
-  fulltime: {
+  "Full-time": {
     badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
     hover: "hover:bg-blue-50 dark:hover:bg-blue-900/30",
   },
-  parttime: {
+  "Part-time": {
     badge:
       "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
     hover: "hover:bg-violet-50 dark:hover:bg-violet-900/30",
   },
-  contract: {
+  Contract: {
     badge:
       "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
     hover: "hover:bg-amber-50 dark:hover:bg-amber-900/30",
   },
-  internship: {
+  Freelance: {
     badge: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
     hover: "hover:bg-teal-50 dark:hover:bg-teal-900/30",
   },
-  volunteer: {
+  Internship: {
     badge: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
     hover: "hover:bg-rose-50 dark:hover:bg-rose-900/30",
   },
@@ -63,21 +69,21 @@ const COLOR = {
       "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
     hover: "hover:bg-emerald-50 dark:hover:bg-emerald-900/30",
   },
-  wfo: {
+  Senior: {
     badge: "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300",
     hover: "hover:bg-sky-50 dark:hover:bg-sky-900/30",
   },
-  hybrid: {
+  Middle: {
     badge:
       "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
     hover: "hover:bg-purple-50 dark:hover:bg-purple-900/30",
   },
-  noexp: {
+  Junior: {
     badge:
       "bg-neutral-200 text-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-200",
     hover: "hover:bg-neutral-100 dark:hover:bg-neutral-800/40",
   },
-  fresh: {
+  "Fresh Graduate": {
     badge: "bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300",
     hover: "hover:bg-lime-50 dark:hover:bg-lime-900/30",
   },
@@ -102,6 +108,58 @@ const COLOR = {
   },
 } as const;
 
+const RANDOM_COLOR_SETS = [
+  {
+    badge:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+    hover: "hover:bg-emerald-50 dark:hover:bg-emerald-900/3",
+  },
+  {
+    badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    hover: "hover:bg-blue-50 dark:hover:bg-blue-900/30",
+  },
+  {
+    badge:
+      "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+    hover: "hover:bg-violet-50 dark:hover:bg-violet-900/30",
+  },
+  {
+    badge:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    hover: "hover:bg-amber-50 dark:hover:bg-amber-900/30",
+  },
+  {
+    badge: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
+    hover: "hover:bg-teal-50 dark:hover:bg-teal-900/30",
+  },
+  {
+    badge: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+    hover: "hover:bg-rose-50 dark:hover:bg-rose-900/30",
+  },
+  {
+    badge: "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300",
+    hover: "hover:bg-sky-50 dark:hover:bg-sky-900/30",
+  },
+  {
+    badge:
+      "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
+    hover: "hover:bg-purple-50 dark:hover:bg-purple-900/30",
+  },
+];
+
+function getColor(type: string) {
+  if (COLOR[type as keyof typeof COLOR]) {
+    return COLOR[type as keyof typeof COLOR];
+  }
+  let hash = 0;
+  for (let i = 0; i < type.length; i++) {
+    hash = (hash << 5) - hash + type.charCodeAt(i);
+    hash |= 0;
+  }
+  const randomIndex = Math.abs(hash) % RANDOM_COLOR_SETS.length;
+
+  return RANDOM_COLOR_SETS[randomIndex];
+}
 /* ============ Province → City → District ============ */
 type Province = {
   province: string;
@@ -169,16 +227,24 @@ const jobCityKey = (j: Job) =>
   canonicalCityName(j.region) || canonicalCityName(j.province);
 
 /* ================= Options ================= */
-const JOB_TYPES: JobType[] = [
-  "fulltime",
-  "parttime",
-  "contract",
-  "internship",
-  "volunteer",
-];
-const POLICIES: Policy[] = ["wfh", "wfo", "hybrid"];
-const EXPS: Experience[] = ["noexp", "fresh", "1-2", "3-5", "6-10", "10+"];
 
+const employment_type = await api.get("/employment_types");
+// const JOB_TYPES: JobType[] = [
+//   "Full-time",
+//   "Part-time",
+//   "Contract",
+//   "Internship",
+//   "Freelance",
+// ];
+const nameParam = "_"; // biar ga kosong
+
+const tags = await api.get(`/tags/all/${nameParam}`);
+const JOB_TYPES: JobType[] = employment_type?.data.map((k) => k.name);
+const POLICIES: Policy[] = tags?.data.map((k) => k.name);
+const exp = await api.get("/experience_levels");
+// console.log(exp.data);
+const EXPS: Experience[] = exp?.data.map((k) => k.name);
+console.log(EXPS);
 /* ===================================================================== */
 /* Main */
 /* ===================================================================== */
@@ -199,6 +265,7 @@ export default function JobsClient({
   const params = useSearchParams();
   const pageFromURL = Number(params.get("page") || pageProp || 1);
   const page = Number.isNaN(pageFromURL) ? 1 : Math.max(1, pageFromURL);
+  const router = useRouter();
 
   /* --- Hydration-safe responsive page size (desktop 30 / tablet 20 / mobile 10) --- */
   const [pageSize, setPageSize] = React.useState<number>(10); // default SSR aman
@@ -256,12 +323,95 @@ export default function JobsClient({
   const pageJobs = filteredAll.slice(start, start + pageSize);
 
   const pageHref = (p: number) => {
-    const sp = new URLSearchParams(params?.toString());
-    p <= 1 ? sp.delete("page") : sp.set("page", String(p));
-    const q = sp.toString();
-    return q ? `${pathname}?${q}` : `${pathname}`;
+    const q = new URLSearchParams(params.toString());
+    q.set("page", p.toString());
+    return `?${q.toString()}`;
   };
 
+  const [expanded, setExpanded] = useState(false);
+  const ref = useRef(null);
+
+  const [query, setQuery] = useState(""); // ★ jangan ambil dari params langsung
+
+  useEffect(() => {
+    const param = params.get("search") || "";
+    setQuery(param); // ★ update setelah hydration aman
+  }, [params]);
+
+  const locale = useLocale();
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const params = new URLSearchParams();
+    if (query.trim() !== "") params.set("search", query.trim());
+
+    router.push(makeHref(locale, `/jobs?${params.toString()}`), {
+      scroll: false,
+    });
+  };
+
+  function resetFilters() {
+    // 1) Kosongin semua state checkbox kamu
+    setTypeSet(new Set());
+    setExpSet(new Set());
+    setPolSet(new Set());
+    // tambahkan state lain kalau ada...
+
+    // 2) Hapus semua query kecuali page & limit
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.delete("employment_type");
+    params.delete("experience_level");
+    params.delete("tags");
+    params.delete("location");
+    params.delete("search");
+    params.delete("sort");
+    params.delete("salary");
+
+    // (opsional) reset page ke 1
+    params.set("page", "1");
+
+    router.push("?" + params.toString(), { scroll: false });
+  }
+  const searchParams = useSearchParams();
+  function toggleQueryParam(
+    key: string,
+    value: string,
+    searchParams: URLSearchParams,
+    router: any
+  ) {
+    const params = new URLSearchParams(searchParams.toString());
+    const current = params.get(key)?.split(",").filter(Boolean) || [];
+
+    // cek apakah value sudah ada
+    if (current.includes(value)) {
+      // hapus value nya
+      const next = current.filter((v) => v !== value);
+      if (next.length > 0) params.set(key, next.join(","));
+      else params.delete(key);
+    } else {
+      // tambah value baru
+      current.push(value);
+      params.set(key, current.join(","));
+    }
+
+    router.push(`?${params.toString()}`, { scroll: false });
+  }
+  useEffect(() => {
+    // Ambil param dari URL
+    const typeParam = searchParams.get("employment_type");
+    const tagParam = searchParams.get("tags");
+    const expParam = searchParams.get("experience_level");
+
+    // Helper untuk ubah "a,b,c" → Set(['a','b','c'])
+    const toSet = (v: string | null): Set<string> =>
+      v ? new Set(v.split(",").filter(Boolean)) : new Set();
+
+    // Masukkan ke state
+    setTypeSet(toSet(typeParam));
+    setPolSet(toSet(tagParam));
+    setExpSet(toSet(expParam));
+  }, [searchParams]);
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       {/* Sidebar (desktop) */}
@@ -269,7 +419,23 @@ export default function JobsClient({
         <div className="sticky top-24 rounded-xl border bg-card p-4">
           {/* Header tetap fix */}
           <h3 className="text-sm font-semibold">Filters</h3>
+          <Section title="Search">
+            <form onSubmit={handleSubmit} className="flex gap-2 items-center">
+              <Input
+                type="text"
+                placeholder="Search..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
 
+              <Button
+                type="submit"
+                className="bg-black text-white px-3 py-1 rounded btn"
+              >
+                Go
+              </Button>
+            </form>
+          </Section>
           {/* ==== BODY YANG DISCROLL ==== */}
           <div className="mt-3 max-h-[70vh] overflow-y-auto pr-1">
             <Section title="Job Type">
@@ -277,12 +443,24 @@ export default function JobsClient({
                 <FilterRow key={k}>
                   <Checkbox
                     checked={typeSet.has(k)}
-                    onCheckedChange={() => toggle(setTypeSet, k)}
+                    onCheckedChange={() => {
+                      {
+                        toggle(setTypeSet, k);
+                        toggleQueryParam(
+                          "employment_type",
+                          k,
+                          searchParams,
+                          router
+                        );
+                      }
+                    }}
                   />
                   <span
-                    className={`rounded px-2 py-0.5 text-xs ${COLOR[k].badge}`}
+                    className={`rounded px-2 py-0.5 text-xs ${
+                      getColor(k).badge
+                    }`}
                   >
-                    {labelize(k)}
+                    {k}
                   </span>
                 </FilterRow>
               ))}
@@ -290,20 +468,64 @@ export default function JobsClient({
 
             <Separator className="my-4" />
 
-            <Section title="Work Policy">
-              {POLICIES.map((k) => (
-                <FilterRow key={k}>
-                  <Checkbox
-                    checked={polSet.has(k)}
-                    onCheckedChange={() => toggle(setPolSet, k)}
-                  />
-                  <span
-                    className={`rounded px-2 py-0.5 text-xs ${COLOR[k].badge}`}
-                  >
-                    {labelize(k)}
-                  </span>
-                </FilterRow>
-              ))}
+            <Section title="Tags">
+              {(() => {
+                const JOB_TYPES_L = JOB_TYPES.map((v) => v.toLowerCase());
+                const EXPS_L = EXPS.map((v) => v.toLowerCase());
+                // jika collapsed → tampilkan hanya 3 item
+
+                const FILTERED_POLICIES = POLICIES.filter(
+                  (k) =>
+                    !JOB_TYPES_L.includes(k.toLowerCase()) &&
+                    !EXPS_L.includes(k.toLowerCase())
+                );
+                const visiblePolicies = expanded
+                  ? FILTERED_POLICIES
+                  : FILTERED_POLICIES.slice(0, 3);
+                console.log(visiblePolicies);
+                return (
+                  <>
+                    {visiblePolicies.map((k) => (
+                      <FilterRow
+                        key={k}
+                        style={{
+                          maxHeight: expanded
+                            ? `${ref.current?.scrollHeight}px`
+                            : "0px",
+                        }}
+                        className="transition-all duration-300 overflow-hidden"
+                      >
+                        <Checkbox
+                          checked={polSet.has(k)}
+                          onCheckedChange={() => {
+                            toggle(setPolSet, k);
+                            toggleQueryParam("tags", k, searchParams, router);
+                          }}
+                        />
+                        <span
+                          className={`rounded px-2 py-0.5 text-xs ${
+                            getColor(k).badge
+                          }`}
+                        >
+                          {k}
+                        </span>
+                      </FilterRow>
+                    ))}
+
+                    {FILTERED_POLICIES.length > 3 && (
+                      <button
+                        type="button"
+                        onClick={() => setExpanded(!expanded)}
+                        className="text-xs text-primary mt-1 hover:underline"
+                      >
+                        {expanded
+                          ? "Show less"
+                          : `Show more (${FILTERED_POLICIES.length - 3} more)`}
+                      </button>
+                    )}
+                  </>
+                );
+              })()}
             </Section>
 
             <Separator className="my-4" />
@@ -313,12 +535,22 @@ export default function JobsClient({
                 <FilterRow key={k}>
                   <Checkbox
                     checked={expSet.has(k)}
-                    onCheckedChange={() => toggle(setExpSet, k)}
+                    onCheckedChange={() => {
+                      toggle(setExpSet, k);
+                      toggleQueryParam(
+                        "experience_level",
+                        k,
+                        searchParams,
+                        router
+                      );
+                    }}
                   />
                   <span
-                    className={`rounded px-2 py-0.5 text-xs ${COLOR[k].badge}`}
+                    className={`rounded px-2 py-0.5 text-xs ${
+                      getColor(k).badge
+                    }`}
                   >
-                    {expLabel(k)}
+                    {k}
                   </span>
                 </FilterRow>
               ))}
@@ -326,74 +558,74 @@ export default function JobsClient({
 
             <Separator className="my-4" />
 
-            <Section title="Location">
-              <FilterRow>
-                <Checkbox
-                  checked={allUz}
-                  onCheckedChange={(v) => {
-                    const val = Boolean(v);
-                    setAllUz(val);
-                    if (val) setSelectedDistricts(new Set());
-                  }}
-                />
-                <span>All Uzbekistan</span>
-              </FilterRow>
+            {/* <Section title="Location"> */}
+            <FilterRow className="hidden">
+              <Checkbox
+                checked={allUz}
+                onCheckedChange={(v) => {
+                  const val = Boolean(v);
+                  setAllUz(val);
+                  if (val) setSelectedDistricts(new Set());
+                }}
+              />
+              <span>All Uzbekistan</span>
+            </FilterRow>
 
-              {!allUz && (
-                <div className="mt-2 rounded-md border">
-                  {/* scroller untuk tree lokasi */}
-                  <div className="max-h-[55vh] overflow-y-auto p-2 thin-scrollbar">
-                    <Accordion type="multiple">
-                      {UZ_PROVINCES.map((P) => (
-                        <AccordionItem key={P.province} value={P.province}>
-                          <AccordionTrigger className="text-sm">
-                            {P.province}
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <div className="ml-2 space-y-2 border-l pl-3">
-                              <Accordion type="multiple">
-                                {P.cities.map((C) => (
-                                  <AccordionItem
-                                    key={`${P.province}/${C.city}`}
-                                    value={`${P.province}/${C.city}`}
-                                  >
-                                    <AccordionTrigger className="text-sm">
-                                      {C.city}
-                                    </AccordionTrigger>
-                                    <AccordionContent>
-                                      <div className="ml-2 space-y-1 border-l pl-3">
-                                        {C.districts.map((D) => (
-                                          <FilterRow
-                                            key={`${P.province}/${C.city}/${D}`}
-                                          >
-                                            <Checkbox
-                                              checked={selectedDistricts.has(
+            {!allUz && (
+              <div className="mt-2 rounded-md border">
+                {/* scroller untuk tree lokasi */}
+                <div className="max-h-[55vh] overflow-y-auto p-2 thin-scrollbar">
+                  <Accordion type="multiple">
+                    {UZ_PROVINCES.map((P) => (
+                      <AccordionItem key={P.province} value={P.province}>
+                        <AccordionTrigger className="text-sm">
+                          {P.province}
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="ml-2 space-y-2 border-l pl-3">
+                            <Accordion type="multiple">
+                              {P.cities.map((C) => (
+                                <AccordionItem
+                                  key={`${P.province}/${C.city}`}
+                                  value={`${P.province}/${C.city}`}
+                                >
+                                  <AccordionTrigger className="text-sm">
+                                    {C.city}
+                                  </AccordionTrigger>
+                                  <AccordionContent>
+                                    <div className="ml-2 space-y-1 border-l pl-3">
+                                      {C.districts.map((D) => (
+                                        <FilterRow
+                                          key={`${P.province}/${C.city}/${D}`}
+                                        >
+                                          <Checkbox
+                                            checked={selectedDistricts.has(
+                                              `${P.province}/${C.city}/${D}`
+                                            )}
+                                            onCheckedChange={() =>
+                                              toggle(
+                                                setSelectedDistricts,
                                                 `${P.province}/${C.city}/${D}`
-                                              )}
-                                              onCheckedChange={() =>
-                                                toggle(
-                                                  setSelectedDistricts,
-                                                  `${P.province}/${C.city}/${D}`
-                                                )
-                                              }
-                                            />
-                                            <span>{D}</span>
-                                          </FilterRow>
-                                        ))}
-                                      </div>
-                                    </AccordionContent>
-                                  </AccordionItem>
-                                ))}
-                              </Accordion>
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                    </Accordion>
-                  </div>
+                                              )
+                                            }
+                                          />
+                                          <span>{D}</span>
+                                        </FilterRow>
+                                      ))}
+                                    </div>
+                                  </AccordionContent>
+                                </AccordionItem>
+                              ))}
+                            </Accordion>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
                 </div>
-              )}
-            </Section>
+              </div>
+            )}
+            {/* </Section> */}
             {/* ==== /BODY ==== */}
           </div>
 
@@ -401,13 +633,9 @@ export default function JobsClient({
           <Button
             variant="ghost"
             size="sm"
-            className="mt-4 w-full"
+            className="w-full"
             onClick={() => {
-              setTypeSet(new Set());
-              setPolSet(new Set());
-              setExpSet(new Set());
-              setAllUz(true);
-              setSelectedDistricts(new Set());
+              resetFilters();
             }}
           >
             Reset Filters
@@ -466,20 +694,9 @@ export default function JobsClient({
 }
 
 function JobCard({ job }: { job: Job }) {
-  // const typeC = COLOR[job.employment_type];
-  // const polC = COLOR[job.policy];
-  // const expC = COLOR[job.experience_level];
+  const locale = useLocale();
   const [saved, setSaved] = React.useState(false);
   const LS_KEY = "savedJobs";
-
-  // React.useEffect(() => {
-  //   if (typeof window === "undefined") return;
-  //   try {
-  //     const raw = localStorage.getItem(LS_KEY);
-  //     const arr: any[] = raw ? JSON.parse(raw) : [];
-  //     setSaved(arr.some((x) => x.id === job.id));
-  //   } catch {}
-  // }, [job.id]);
 
   const toggleSave = () => {
     try {
@@ -498,7 +715,7 @@ function JobCard({ job }: { job: Job }) {
           company: job.company_name,
           location: job.location,
           savedAt: new Date().toISOString(),
-          href: `/jobs/${job.id}`,
+          href: makeHref(locale, `/jobs/${job.id}`),
         });
         setSaved(true);
       }
@@ -508,10 +725,11 @@ function JobCard({ job }: { job: Job }) {
   };
 
   const onShare = async () => {
+    const href = makeHref(locale, `/jobs/${job.id}`);
     const url =
       typeof window !== "undefined"
-        ? `${window.location.origin}/jobs/${job.id}`
-        : `/jobs/${job.id}`;
+        ? `${window.location.origin}${href}`
+        : `${href}`;
     try {
       if (navigator.share)
         await navigator.share({
@@ -526,12 +744,21 @@ function JobCard({ job }: { job: Job }) {
     } catch {}
   };
 
+  function formatCurrency(value: number, currency: string = "IDR") {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
   // const city = jobCityKey(job);
   // const locationStr = `${job.district}, ${city}, ${job.province}`;
   const locationStr = `${job.location}`;
 
   return (
-    <Card className={`relative`}>
+    <Card
+      className={`relative  transform transition-transform duration-300 ease-in-out hover:scale-105`}
+    >
       <div className="absolute right-2 top-2 md:right-3 md:top-3 flex gap-2">
         <Button
           variant="ghost"
@@ -555,18 +782,76 @@ function JobCard({ job }: { job: Job }) {
         </Button>
       </div>
 
-      <CardHeader className="space-y-2 pr-10 md:pr-12 xl:pr-14">
-        <CardTitle className="text-base">{job.title}</CardTitle>
+      <CardHeader className="space-y-3 pr-10 md:pr-12 xl:pr-14">
+        <div className="flex items-center gap-3 ">
+          {/* Avatar */}
+          {job.avatar_url ? (
+            <img
+              src={"http://localhost:5000" + job.avatar_url}
+              onError={(e) => {
+                e.currentTarget.style.display = "none"; // hide broken img
+                e.currentTarget.nextSibling.style.display = "flex"; // show fallback
+              }}
+              alt={job.company_name}
+              className="w-15 h-15 rounded-full object-cover border"
+            />
+          ) : null}
+
+          {/* Fallback Avatar (initials) */}
+          <div
+            className={`w-15 h-15 rounded-full border bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-200 flex items-center justify-center font-semibold ${
+              job.avatar_url ? "hidden" : "flex"
+            }`}
+          >
+            {job.company_name?.charAt(0)?.toUpperCase() || "?"}
+          </div>
+
+          {/* Title + Company Name */}
+          <div className="flex flex-col">
+            <CardTitle className="text-base">{job.title}</CardTitle>
+            <span className="text-xs text-muted-foreground">
+              {job.company_name}
+            </span>
+          </div>
+        </div>
+
+        {/* BADGES */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className={`rounded px-2 py-0.5`}>
-            {labelize(job.employment_type)}
+          <span
+            className={`rounded px-2 py-0.5 ${
+              getColor(job.employment_type).badge
+            } ${getColor(job.employment_type).hover}`}
+          >
+            {job.employment_type}
           </span>
-          {/* <span className={`rounded px-2 py-0.5 ${polC.badge}`}>
-            {labelize(job.policy)}
-          </span> */}
-          <span className={`rounded px-2 py-0.5`}>
-            {expLabel(job.experience_level)}
+
+          <span
+            className={`rounded px-2 py-0.5 ${
+              getColor(job.experience_level).badge
+            } ${getColor(job.experience_level).hover}`}
+          >
+            {job.experience_level}
           </span>
+
+          {job.tags &&
+            job.tags.map((tag) => {
+              if (
+                ![
+                  job.experience_level.toLowerCase(),
+                  job.employment_type.toLowerCase(),
+                ].includes(tag.name.toLowerCase())
+              )
+                return (
+                  <span
+                    key={tag.id}
+                    className={`rounded px-2 py-0.5 ${
+                      getColor(tag.name).badge
+                    } ${getColor(tag.name).hover}`}
+                  >
+                    {tag.name}
+                  </span>
+                );
+            })}
         </div>
       </CardHeader>
 
@@ -574,7 +859,13 @@ function JobCard({ job }: { job: Job }) {
         <div className="mb-2 flex items-center gap-2">
           <Banknote className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium">
-            UZS {job.salary_min}–{job.salary_max}M / month
+            {job.currency &&
+              (job.salary_max
+                ? `${formatCurrency(
+                    job.salary_min,
+                    job.currency
+                  )} – ${formatCurrency(job.salary_max, job.currency)} / month`
+                : `${formatCurrency(job.salary_min, job.currency)} / month`)}
           </span>
         </div>
         <div className="mb-2 text-sm text-muted-foreground">{job.company}</div>
@@ -591,13 +882,17 @@ function JobCard({ job }: { job: Job }) {
 
         <div className="mt-2 flex items-center justify-between">
           <Link
-            href={`/jobs/${job.id}`}
+            href={makeHref(locale, `/jobs/${job.id}`)}
             className="font-medium text-primary underline-offset-4 hover:underline"
           >
             Apply Now →
           </Link>
           <span className="text-xs text-muted-foreground">
-            Posted {job.created_at}
+            Posted
+            {" " +
+              formatDistanceToNow(new Date(job.created_at), {
+                addSuffix: true,
+              })}
           </span>
         </div>
       </CardContent>
@@ -641,22 +936,6 @@ function labelize(v: string) {
     .replace("noexp", "No Experience")
     .replace("fresh", "Fresh Graduate");
 }
-function expLabel(v: Experience) {
-  switch (v) {
-    case "noexp":
-      return "No Experience";
-    case "fresh":
-      return "Fresh Graduate";
-    case "1-2":
-      return "1-2 Years";
-    case "3-5":
-      return "3-5 Years";
-    case "6-10":
-      return "6-10 Years";
-    case "10+":
-      return "10+ Years";
-  }
-}
 
 /* =================== Mobile Filter (with scroller) =================== */
 function MobileFilter({
@@ -692,6 +971,8 @@ function MobileFilter({
       return n;
     });
 
+  const [expanded, setExpanded] = React.useState(false);
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -714,7 +995,7 @@ function MobileFilter({
                   onCheckedChange={() => toggle(setTypeSet, k)}
                 />
                 <span
-                  className={`rounded px-2 py-0.5 text-xs ${COLOR[k].badge}`}
+                  className={`rounded px-2 py-0.5 text-xs ${getColor(k).badge}`}
                 >
                   {labelize(k)}
                 </span>
@@ -724,20 +1005,45 @@ function MobileFilter({
 
           <Separator />
 
-          <Section title="Work Policy">
-            {POLICIES.map((k) => (
-              <FilterRow key={k}>
-                <Checkbox
-                  checked={polSet.has(k)}
-                  onCheckedChange={() => toggle(setPolSet, k)}
-                />
-                <span
-                  className={`rounded px-2 py-0.5 text-xs ${COLOR[k].badge}`}
-                >
-                  {labelize(k)}
-                </span>
-              </FilterRow>
-            ))}
+          <Section title="Tags">
+            {(() => {
+              // jika collapsed → tampilkan hanya 3 item
+              const visiblePolicies = expanded
+                ? POLICIES
+                : POLICIES.slice(0, 3);
+              console.log(visiblePolicies);
+              return (
+                <>
+                  {visiblePolicies.map((k) => (
+                    <FilterRow key={k}>
+                      <Checkbox
+                        checked={polSet.has(k)}
+                        onCheckedChange={() => toggle(setPolSet, k)}
+                      />
+                      <span
+                        className={`rounded px-2 py-0.5 text-xs ${
+                          getColor(k).badge
+                        }`}
+                      >
+                        {k}
+                      </span>
+                    </FilterRow>
+                  ))}
+
+                  {POLICIES.length > 3 && (
+                    <button
+                      type="button"
+                      onClick={() => setExpanded(!expanded)}
+                      className="text-xs text-primary mt-1 hover:underline"
+                    >
+                      {expanded
+                        ? "Show less"
+                        : `Show more (${POLICIES.length - 3} more)`}
+                    </button>
+                  )}
+                </>
+              );
+            })()}
           </Section>
 
           <Separator />
@@ -750,9 +1056,9 @@ function MobileFilter({
                   onCheckedChange={() => toggle(setExpSet, k)}
                 />
                 <span
-                  className={`rounded px-2 py-0.5 text-xs ${COLOR[k].badge}`}
+                  className={`rounded px-2 py-0.5 text-xs ${getColor(k).badge}`}
                 >
-                  {expLabel(k)}
+                  {k}
                 </span>
               </FilterRow>
             ))}
@@ -890,7 +1196,7 @@ function PaginationResponsive({
   return (
     <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <span className="text-xs text-muted-foreground">
-        Page {currentPage} of {totalPages} — {totalItems} jobs
+        Page {currentPage} of {totalPages}
       </span>
 
       {isMobile ? (
