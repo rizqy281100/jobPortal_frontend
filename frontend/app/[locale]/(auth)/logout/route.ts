@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { clearSession, readSession } from "@/lib/session";
+import { deleteSession, getSession } from "@/lib/session";
 
 export async function GET() {
   // baca session untuk ambil token
-  const session = await readSession();
+  const session = await getSession();
 
   // panggil backend logout dulu
   try {
@@ -20,7 +20,7 @@ export async function GET() {
   }
 
   // Hapus session NEXT
-  await clearSession();
+  await deleteSession();
 
   // Redirect ke home
   return NextResponse.redirect(

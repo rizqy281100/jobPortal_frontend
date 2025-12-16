@@ -695,33 +695,87 @@ export default function JobsClient({
 
 function JobCard({ job }: { job: Job }) {
   const locale = useLocale();
-  const [saved, setSaved] = React.useState(false);
+  const [saved, setSaved] = React.useState(job.saved ?? false);
   const LS_KEY = "savedJobs";
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const toggleSave = () => {
+  const { accessToken, user } = useAppSelector((state) => state.auth);
+  const isLoggedIn = Boolean(accessToken && user);
+
+  // console.log("ini user", user);
+  const toggleSave = async () => {
     try {
+      // --- 1. USER BELUM LOGIN ---
+      if (!isLoggedIn || !accessToken) {
+        router.push(
+          makeHref(locale, `/login?redirect=${encodeURIComponent(pathname)}`)
+        );
+        return;
+      }
+      const savedItemId = !isLoggedIn || !accessToken ? null : job.saved_id; // ID saved_jobs dari backend
+
+      // --- 2. Ambil cache local ---
       const raw = localStorage.getItem(LS_KEY);
       const arr: any[] = raw ? JSON.parse(raw) : [];
       const idx = arr.findIndex((x) => x.id === job.id);
-      if (idx >= 0) {
-        arr.splice(idx, 1);
-        setSaved(false);
-      } else {
-        // const city = jobCityKey(job);
-        // const locationStr = `${job.district}, ${city}, ${job.province}`;
-        arr.unshift({
-          id: job.id,
-          title: job.title,
-          company: job.company_name,
-          location: job.location,
-          savedAt: new Date().toISOString(),
-          href: makeHref(locale, `/jobs/${job.id}`),
-        });
-        setSaved(true);
+
+      // -----------------------------
+      // CASE 1: SUDAH SAVE → DELETE
+      // -----------------------------
+      if (saved) {
+        try {
+          if (savedItemId) {
+            await api.delete(`/saved-jobs/${savedItemId}`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+          }
+
+          if (idx >= 0) arr.splice(idx, 1);
+
+          setSaved(false); // 🔵 UI jadi non-biru
+        } catch (e) {
+          console.error("Failed to delete saved job:", e);
+          return;
+        }
       }
+
+      // -----------------------------
+      // CASE 2: BELUM SAVE → CREATE
+      // -----------------------------
+      else {
+        try {
+          const res = await api.post(
+            `/saved-jobs/${job.id}`,
+            {},
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+
+          const savedId = res.data?.id;
+
+          arr.unshift({
+            id: job.id,
+            serverId: savedId,
+            title: job.title,
+            company: job.company_name,
+            location: job.location,
+            savedAt: new Date().toISOString(),
+            href: makeHref(locale, `/jobs/${job.id}`),
+          });
+
+          setSaved(true); // 🔵 UI berubah jadi biru
+        } catch (e) {
+          console.error("Failed to save job:", e);
+          return;
+        }
+      }
+
+      // Simpan ulang local cache + trigger global event
       localStorage.setItem(LS_KEY, JSON.stringify(arr));
       window.dispatchEvent(new CustomEvent("saved-jobs-changed"));
-    } catch {}
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const onShare = async () => {
@@ -759,7 +813,12 @@ function JobCard({ job }: { job: Job }) {
     <Card
       className={`relative  transform transition-transform duration-300 ease-in-out hover:scale-105`}
     >
-      <div className="absolute right-2 top-2 md:right-3 md:top-3 flex gap-2">
+      <div className="absolute right-2 top-2 md:right-3 md:top-3 flex gap-2 ">
+        {job.applied && (
+          <span className="px-2 py-0.5 text-xs rounded-md bg-secondary text-muted-foreground content-center">
+            Applied
+          </span>
+        )}
         <Button
           variant="ghost"
           size="icon"
