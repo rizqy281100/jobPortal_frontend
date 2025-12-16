@@ -59,8 +59,10 @@ export default function JobPostPage({ params }) {
     async function fetchJob() {
       try {
         const res = await api.get(`/job-posts/${id}`);
+
         const tags = await api.get(`/job-posts/${id}/tags`);
         setJob({ ...res.data.data, tags: tags.data.data });
+        console.log("job ", res);
       } catch (err) {
         console.error(err);
       } finally {
@@ -93,9 +95,63 @@ export default function JobPostPage({ params }) {
 
     setApplyOpen(true);
   };
+  if (loading)
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <svg className="h-6 w-6 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            />
+          </svg>
+          <p className="text-sm">Loading job details…</p>
+        </div>
+      </div>
+    );
+  if (!job)
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="max-w-md text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <svg
+              className="h-6 w-6 text-muted-foreground"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9.172 9.172a4 4 0 015.656 5.656M6 6l12 12"
+              />
+            </svg>
+          </div>
 
-  if (loading) return <div className="p-6">Loading...</div>;
-  if (!job) return <div className="p-6">Job not found.</div>;
+          <h2 className="text-lg font-semibold">Job not found</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            The job you’re looking for doesn’t exist or may have been removed.
+          </p>
+
+          <button
+            onClick={() => window.history.back()}
+            className="mt-5 inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent"
+          >
+            ← Go back
+          </button>
+        </div>
+      </div>
+    );
 
   return (
     <>
@@ -282,8 +338,13 @@ export default function JobPostPage({ params }) {
             </Card>
           )}
           {user?.role !== "recruiter" && (
-            <Button className="w-full text-white" onClick={handleApply}>
-              Apply Now
+            <Button
+              className="w-full"
+              onClick={handleApply}
+              disabled={job?.applied}
+              variant={job?.applied ? "secondary" : "default"}
+            >
+              {job?.applied ? "Applied" : "Apply Now"}
             </Button>
           )}
         </div>
