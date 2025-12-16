@@ -296,7 +296,7 @@ function MobileNav({ items }: { items: NavItem[] }) {
         },
       });
 
-      // @ts-ignore – sesuaikan dengan bentuk response API-mu
+      // ts-ignore – sesuaikan dengan bentuk response API-mu
       if (response.code !== 200 && response.status !== 200) {
         throw new Error("Logout failed");
       }
